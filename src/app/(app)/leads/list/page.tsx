@@ -12,6 +12,7 @@ import {
 } from "@/hooks/use-leads";
 import { useStages } from "@/hooks/use-stages";
 import { NewLeadDialog } from "@/components/leads/new-lead-dialog";
+import { ImportLeadsDialog } from "@/components/leads/import-leads-dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -111,7 +112,7 @@ export default function ListPage() {
   return (
     <>
       <Header title="Leads" />
-      <div className="flex flex-col h-[calc(100vh-3.5rem)]">
+      <div className="flex flex-col h-[calc(100vh-3rem)] sm:h-[calc(100vh-3.5rem)]">
         {/* Toolbar */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border/60">
           <div className="flex items-center gap-1">
@@ -137,7 +138,10 @@ export default function ListPage() {
               <span className="hidden sm:inline">Stale</span>
             </Link>
           </div>
-          <NewLeadDialog />
+          <div className="flex items-center gap-2">
+            <ImportLeadsDialog />
+            <NewLeadDialog />
+          </div>
         </div>
 
         {/* Bulk action bar */}

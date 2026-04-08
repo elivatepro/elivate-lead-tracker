@@ -32,8 +32,8 @@
   --color-gold: #c4960a;
 
   /* Fonts */
-  --font-sans: var(--font-onest);
-  --font-serif: var(--font-instrument-serif);
+  --font-sans: var(--font-lexend);
+  --font-serif: var(--font-lexend);
   --font-mono: var(--font-geist-mono);
 
   /* Radius */

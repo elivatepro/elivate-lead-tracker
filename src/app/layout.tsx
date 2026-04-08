@@ -1,20 +1,12 @@
 import type { Metadata } from "next";
-import { Instrument_Serif, Onest } from "next/font/google";
+import { Lexend } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/components/providers/query-provider";
 import "./globals.css";
 
-const instrumentSerif = Instrument_Serif({
-  variable: "--font-instrument-serif",
+const lexend = Lexend({
+  variable: "--font-lexend",
   subsets: ["latin"],
-  weight: ["400"],
-  display: "swap",
-});
-
-const onest = Onest({
-  variable: "--font-onest",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
   display: "swap",
 });
 
@@ -58,7 +50,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${instrumentSerif.variable} ${onest.variable} h-full antialiased`}
+      className={`${lexend.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         <QueryProvider>

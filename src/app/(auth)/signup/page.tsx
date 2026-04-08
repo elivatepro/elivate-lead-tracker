@@ -66,7 +66,7 @@ export default function SignupPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-serif text-xl font-normal">
+        <CardTitle className="text-xl font-semibold">
           Create your account
         </CardTitle>
         <CardDescription>

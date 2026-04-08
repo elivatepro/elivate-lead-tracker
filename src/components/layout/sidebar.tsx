@@ -39,21 +39,21 @@ export function Sidebar({
             width={22}
             height={22}
           />
-          <span className="font-serif text-[17px] tracking-tight">
+          <span className="text-[17px] font-semibold tracking-tight">
             LeadTracker
           </span>
         </div>
-        <p className="text-[10px] text-muted-foreground pl-[30px] mt-0.5 tracking-wide uppercase">
+        <p className="text-[10px] text-muted-foreground pl-[34px] mt-0.5 tracking-wide uppercase">
           by Elivate
         </p>
       </div>
 
       {/* Workspace name */}
       <div className="px-5 pt-5 pb-3">
-        <p className="text-[10px] font-semibold text-muted-foreground/70 uppercase tracking-[0.1em]">
+        <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-[0.12em]">
           Workspace
         </p>
-        <p className="text-sm font-medium text-foreground/80 mt-0.5 truncate">
+        <p className="text-sm font-semibold text-foreground/80 mt-1 truncate">
           {workspace.name}
         </p>
       </div>
@@ -90,7 +90,7 @@ export function Sidebar({
       <div className="p-3 border-t border-border/60">
         <DropdownMenu>
           <DropdownMenuTrigger className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-muted-foreground hover:bg-secondary/80 hover:text-foreground transition-all">
-            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary/15 to-primary/5 text-primary flex items-center justify-center text-[11px] font-semibold ring-1 ring-primary/10">
+            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary/15 to-primary/5 text-primary flex items-center justify-center text-[11px] font-bold ring-1 ring-primary/10">
               {userEmail[0].toUpperCase()}
             </div>
             <span className="truncate text-left flex-1">{userEmail}</span>

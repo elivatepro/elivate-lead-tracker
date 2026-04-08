@@ -13,7 +13,7 @@ export default function StalePage() {
   return (
     <>
       <Header title="Leads" />
-      <div className="flex flex-col h-[calc(100vh-3.5rem)]">
+      <div className="flex flex-col h-[calc(100vh-3rem)] sm:h-[calc(100vh-3.5rem)]">
         {/* Toolbar */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border/60">
           <div className="flex items-center gap-1">

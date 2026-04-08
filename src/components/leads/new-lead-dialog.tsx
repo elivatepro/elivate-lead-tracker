@@ -72,13 +72,13 @@ export function NewLeadDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="inline-flex shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md h-9 gap-1.5 px-4 text-[13px] font-medium transition-all">
+      <DialogTrigger className="inline-flex shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md h-9 gap-1.5 px-2.5 sm:px-4 text-[13px] font-medium transition-all">
         <Plus className="h-3.5 w-3.5" />
-        New lead
+        <span className="hidden sm:inline">New lead</span>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[480px]">
         <DialogHeader>
-          <DialogTitle className="font-serif text-xl font-normal">
+          <DialogTitle className="text-xl font-semibold">
             Add a new lead
           </DialogTitle>
         </DialogHeader>

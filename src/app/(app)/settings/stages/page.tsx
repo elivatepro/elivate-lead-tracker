@@ -240,7 +240,7 @@ export default function StagesSettingsPage() {
       <Card>
         <CardContent className="pt-5">
           <div className="mb-4">
-            <h2 className="font-serif text-lg">Pipeline stages</h2>
+            <h2 className="text-lg font-semibold">Pipeline stages</h2>
             <p className="text-sm text-muted-foreground mt-1">
               Drag to reorder. Set an SLA (in days) to trigger follow-up
               reminders. Mark a stage as &ldquo;Closed&rdquo; to exclude it from

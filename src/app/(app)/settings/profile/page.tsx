@@ -55,7 +55,7 @@ export default function ProfileSettingsPage() {
     <div className="space-y-6">
       <Card>
         <CardContent className="pt-5 space-y-4">
-          <h2 className="font-serif text-lg">Profile</h2>
+          <h2 className="text-lg font-semibold">Profile</h2>
           <div className="space-y-2">
             <Label>Email</Label>
             <Input value={profile?.email ?? ""} disabled />
@@ -68,7 +68,7 @@ export default function ProfileSettingsPage() {
 
       <Card>
         <CardContent className="pt-5 space-y-4">
-          <h2 className="font-serif text-lg">Change password</h2>
+          <h2 className="text-lg font-semibold">Change password</h2>
           <div className="space-y-2">
             <Label htmlFor="new-password">New password</Label>
             <Input

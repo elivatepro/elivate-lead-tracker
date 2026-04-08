@@ -89,7 +89,7 @@ export default function LoginPage() {
               />
             </svg>
           </div>
-          <h2 className="font-serif text-xl">Check your email</h2>
+          <h2 className="text-xl font-semibold">Check your email</h2>
           <p className="text-sm text-muted-foreground">
             We sent you a magic link. Click it to sign in.
           </p>
@@ -111,7 +111,7 @@ export default function LoginPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-serif text-xl font-normal">
+        <CardTitle className="text-xl font-semibold font-normal">
           Welcome back
         </CardTitle>
         <CardDescription>

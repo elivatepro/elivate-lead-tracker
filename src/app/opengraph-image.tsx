@@ -16,7 +16,7 @@ export default function OpenGraphImage() {
           alignItems: "center",
           justifyContent: "center",
           backgroundColor: "#fdfaf3",
-          fontFamily: "serif",
+          fontFamily: "sans-serif",
         }}
       >
         {/* Logo mark */}

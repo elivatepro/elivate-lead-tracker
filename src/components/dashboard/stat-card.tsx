@@ -25,14 +25,14 @@ export function StatCard({
         className="absolute top-0 inset-x-0 h-[2px]"
         style={{ backgroundColor: accent || "#e8e2d4" }}
       />
-      <CardContent className="pt-5 pb-4">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
+      <CardContent className="pt-4 sm:pt-5 pb-3 sm:pb-4 px-3 sm:px-5">
+        <p className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-[0.08em] text-muted-foreground/70">
           {title}
         </p>
-        <p className="font-serif text-[28px] tracking-tight mt-1 leading-none">
+        <p className="text-xl sm:text-[28px] font-semibold tracking-tight mt-1 leading-none">
           {value}
         </p>
-        <p className="text-[11px] text-muted-foreground/60 mt-2">
+        <p className="text-[10px] sm:text-[11px] text-muted-foreground/60 mt-1.5 sm:mt-2 hidden sm:block">
           {description}
         </p>
       </CardContent>

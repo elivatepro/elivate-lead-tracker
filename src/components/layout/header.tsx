@@ -17,13 +17,13 @@ export function Header({ title }: { title: string }) {
   }
 
   return (
-    <header className="h-14 border-b border-border/60 bg-card/50 backdrop-blur-sm flex items-center justify-between px-4 sm:px-6">
-      <h1 className="font-serif text-xl tracking-tight">{title}</h1>
-      <form onSubmit={handleSearch} className="relative w-44 sm:w-56 hidden sm:block">
+    <header className="h-12 sm:h-14 border-b border-border/60 bg-card/50 backdrop-blur-sm flex items-center justify-between px-4 sm:px-6 gap-4">
+      <h1 className="text-lg sm:text-xl font-semibold tracking-tight shrink-0">{title}</h1>
+      <form onSubmit={handleSearch} className="relative w-full max-w-[220px] sm:max-w-[240px]">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
         <Input
-          placeholder="Search... ( / )"
-          className="pl-9 h-8 bg-secondary/40 border-transparent text-xs placeholder:text-muted-foreground/40 focus-visible:bg-white focus-visible:border-input"
+          placeholder="Search leads..."
+          className="pl-9 h-8 sm:h-9 bg-secondary/40 border-transparent text-sm placeholder:text-muted-foreground/40 focus-visible:bg-white focus-visible:border-input"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />

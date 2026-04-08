@@ -95,16 +95,16 @@ export default function DashboardPage() {
   return (
     <>
       <Header title="Dashboard" />
-      <div className="p-4 sm:p-6 space-y-6 sm:space-y-8 max-w-[1200px]">
-        <div className="flex items-center justify-between">
-          <p className="text-[13px] text-muted-foreground">
+      <div className="p-4 sm:p-6 space-y-5 sm:space-y-8 max-w-[1200px]">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
             Your pipeline at a glance.
           </p>
           <NewLeadDialog />
         </div>
 
         {/* Stat cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 sm:gap-4">
           <StatCard
             title="Active leads"
             value={isLoading ? "--" : data?.activeLeads ?? 0}
@@ -146,7 +146,7 @@ export default function DashboardPage() {
         {/* Recent activity */}
         <Card>
           <CardContent className="pt-5">
-            <h2 className="font-serif text-lg mb-1">Recent activity</h2>
+            <h2 className="text-lg font-semibold mb-1">Recent activity</h2>
             <p className="text-[11px] text-muted-foreground/60 mb-4">
               Latest actions across your pipeline
             </p>

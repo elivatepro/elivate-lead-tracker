@@ -17,7 +17,7 @@ export default function AuthLayout({
             priority
           />
           <div className="text-center">
-            <h1 className="font-serif text-3xl tracking-tight text-foreground">
+            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
               LeadTracker
             </h1>
             <p className="text-sm text-muted-foreground mt-1">by Elivate</p>

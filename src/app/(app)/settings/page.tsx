@@ -88,7 +88,7 @@ export default function GeneralSettingsPage() {
     <div className="space-y-6">
       <Card>
         <CardContent className="pt-5 space-y-4">
-          <h2 className="font-serif text-lg">Workspace</h2>
+          <h2 className="text-lg font-semibold">Workspace</h2>
           <div className="space-y-2">
             <Label htmlFor="workspace-name">Workspace name</Label>
             <Input
@@ -104,7 +104,7 @@ export default function GeneralSettingsPage() {
       <Card>
         <CardContent className="pt-5 space-y-4">
           <div>
-            <h2 className="font-serif text-lg">Required fields</h2>
+            <h2 className="text-lg font-semibold">Required fields</h2>
             <p className="text-sm text-muted-foreground mt-1">
               Leads missing any of these fields will be marked as
               &ldquo;incomplete&rdquo; on your dashboard.
