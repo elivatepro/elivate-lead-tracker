@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { DollarSign, Clock } from "lucide-react";
+import { DollarSign, Clock, Mail } from "lucide-react";
 import type { LeadWithStage } from "@/hooks/use-leads";
 
 function daysSince(date: string) {
@@ -33,16 +33,18 @@ function getInitials(name: string) {
 
 export function LeadCard({ lead }: { lead: LeadWithStage }) {
   const stale = isStale(lead);
+  const email = lead.email?.trim() ?? "";
+  const hasEmail = email.length > 0;
 
   return (
-    <Link href={`/leads/${lead.id}`}>
-      <div
-        className={`bg-card rounded-lg p-3.5 transition-all cursor-pointer group border ${
-          stale
-            ? "border-stale/20 hover:border-stale/40 shadow-sm shadow-stale/5"
-            : "border-border/60 hover:border-primary/30 hover:shadow-md hover:-translate-y-px shadow-sm"
-        }`}
-      >
+    <div
+      className={`bg-card rounded-lg p-3.5 transition-all group border ${
+        stale
+          ? "border-stale/20 hover:border-stale/40 shadow-sm shadow-stale/5"
+          : "border-border/60 hover:border-primary/30 hover:shadow-md hover:-translate-y-px shadow-sm"
+      }`}
+    >
+      <Link href={`/leads/${lead.id}`} className="block">
         <div className="flex items-start gap-3">
           {/* Avatar initials */}
           <div
@@ -92,7 +94,25 @@ export function LeadCard({ lead }: { lead: LeadWithStage }) {
             </span>
           </div>
         )}
+      </Link>
+
+      <div className="mt-3 flex justify-end border-t border-border/50 pt-2.5">
+        <button
+          type="button"
+          disabled={!hasEmail}
+          title={hasEmail ? `Email ${lead.name}` : "No email address saved"}
+          onPointerDown={(event) => event.stopPropagation()}
+          onClick={(event) => {
+            event.stopPropagation();
+            if (!hasEmail) return;
+            window.location.href = `mailto:${email}`;
+          }}
+          className="inline-flex items-center gap-1.5 rounded-md border border-border/70 bg-background px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-45"
+        >
+          <Mail className="h-3.5 w-3.5" />
+          <span>Email</span>
+        </button>
       </div>
-    </Link>
+    </div>
   );
 }

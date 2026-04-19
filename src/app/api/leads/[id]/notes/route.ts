@@ -28,12 +28,19 @@ export async function POST(
   if (activityError)
     return NextResponse.json({ error: activityError.message }, { status: 500 });
 
-  // Touch the lead to update last_activity_at (the trigger handles this)
-  await ctx.supabase
+  // Touch the lead so note activity resets stale state without overwriting
+  // the dedicated lead summary stored in `leads.notes`.
+  const { error: leadError } = await ctx.supabase
     .from("leads")
-    .update({ notes: note.trim() })
+    .update({
+      last_activity_at: new Date().toISOString(),
+      reminder_sent_at: null,
+    })
     .eq("id", id)
     .eq("workspace_id", ctx.workspace.id);
+
+  if (leadError)
+    return NextResponse.json({ error: leadError.message }, { status: 500 });
 
   return NextResponse.json({ success: true }, { status: 201 });
 }

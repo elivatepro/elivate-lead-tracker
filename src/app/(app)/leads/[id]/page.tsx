@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, use } from "react";
+import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Header } from "@/components/layout/header";
@@ -28,6 +28,7 @@ import {
   Plus,
   AlertCircle,
 } from "lucide-react";
+import { toast } from "sonner";
 import type { Activity } from "@/lib/types";
 
 type LeadDetail = LeadWithStage & {
@@ -84,7 +85,7 @@ function activityLabel(activity: Activity) {
   }
 }
 
-function ReminderInfo({ lead }: { lead: LeadDetail }) {
+function ReminderInfo({ lead, now }: { lead: LeadDetail; now: number }) {
   const stage = lead.stages;
 
   if (stage.is_closed) {
@@ -107,12 +108,10 @@ function ReminderInfo({ lead }: { lead: LeadDetail }) {
 
   if (
     lead.snoozed_until &&
-    new Date(lead.snoozed_until).getTime() > Date.now()
+    new Date(lead.snoozed_until).getTime() > now
   ) {
     const snoozedUntil = new Date(lead.snoozed_until);
-    const daysLeft = Math.ceil(
-      (snoozedUntil.getTime() - Date.now()) / 86400000
-    );
+    const daysLeft = Math.ceil((snoozedUntil.getTime() - now) / 86400000);
     return (
       <div className="flex items-center gap-2 text-[12px] text-gold bg-gold/8 rounded-lg px-3 py-2">
         <Clock className="h-3.5 w-3.5" />
@@ -123,7 +122,6 @@ function ReminderInfo({ lead }: { lead: LeadDetail }) {
 
   const dueAt =
     new Date(lead.last_activity_at).getTime() + stage.sla_days * 86400000;
-  const now = Date.now();
   const isStale = now >= dueAt;
 
   if (isStale) {
@@ -168,6 +166,15 @@ export default function LeadDetailPage({
   const deleteLead = useDeleteLead();
   const [note, setNote] = useState("");
   const [isSendingNote, setIsSendingNote] = useState(false);
+  const [currentTime, setCurrentTime] = useState(() => new Date().getTime());
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => {
+      setCurrentTime(new Date().getTime());
+    }, 60000);
+
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const { data: lead, isLoading } = useQuery<LeadDetail>({
     queryKey: ["lead", id],
@@ -182,16 +189,32 @@ export default function LeadDetailPage({
     if (!note.trim()) return;
     setIsSendingNote(true);
 
-    await fetch(`/api/leads/${id}/notes`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ note: note.trim() }),
-    });
+    try {
+      const res = await fetch(`/api/leads/${id}/notes`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ note: note.trim() }),
+      });
 
-    setNote("");
-    setIsSendingNote(false);
-    queryClient.invalidateQueries({ queryKey: ["lead", id] });
-    queryClient.invalidateQueries({ queryKey: ["leads"] });
+      if (!res.ok) {
+        const error = (await res.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+        throw new Error(error?.error || "Failed to add note");
+      }
+
+      setNote("");
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["lead", id] }),
+        queryClient.invalidateQueries({ queryKey: ["leads"] }),
+      ]);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to add note"
+      );
+    } finally {
+      setIsSendingNote(false);
+    }
   }
 
   async function handleFieldBlur(field: string, value: string) {
@@ -341,15 +364,21 @@ export default function LeadDetailPage({
                 </div>
 
                 {/* Reminder status */}
-                <ReminderInfo lead={lead} />
+                <ReminderInfo lead={lead} now={currentTime} />
 
                 <div className="space-y-2">
-                  <Label>Notes</Label>
+                  <div className="space-y-1">
+                    <Label>Lead summary</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Persistent context for this lead. Activity notes appear in
+                      the timeline on the right.
+                    </p>
+                  </div>
                   <Textarea
                     defaultValue={lead.notes ?? ""}
                     rows={4}
                     onBlur={(e) => handleFieldBlur("notes", e.target.value)}
-                    placeholder="Notes about this lead..."
+                    placeholder="Keep a concise summary of the lead here..."
                   />
                 </div>
               </CardContent>
@@ -361,11 +390,17 @@ export default function LeadDetailPage({
             {/* Add note */}
             <Card>
               <CardContent className="pt-5 space-y-3">
-                <h3 className="text-sm font-medium">Add a note</h3>
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium">Add activity note</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Adds a timestamped note to this lead&apos;s activity
+                    timeline.
+                  </p>
+                </div>
                 <Textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
-                  placeholder="Type your note..."
+                  placeholder="Type a quick update..."
                   rows={3}
                 />
                 <Button
@@ -375,7 +410,7 @@ export default function LeadDetailPage({
                   className="w-full"
                 >
                   <Send className="h-3.5 w-3.5 mr-1" />
-                  {isSendingNote ? "Saving..." : "Add note"}
+                  {isSendingNote ? "Saving..." : "Add to activity"}
                 </Button>
               </CardContent>
             </Card>
