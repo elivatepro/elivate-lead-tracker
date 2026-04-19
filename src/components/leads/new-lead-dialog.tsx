@@ -104,21 +104,27 @@ export function NewLeadDialog() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">Emails</Label>
               <Input
                 id="email"
-                type="email"
-                placeholder="john@acme.com"
+                type="text"
+                placeholder="john@acme.com, sales@acme.com"
                 {...register("email")}
               />
+              <p className="text-xs text-muted-foreground">
+                Separate multiple emails with commas.
+              </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone">Phones</Label>
               <Input
                 id="phone"
-                placeholder="+1 555 0123"
+                placeholder="+1 555 0123, +1 555 0456"
                 {...register("phone")}
               />
+              <p className="text-xs text-muted-foreground">
+                Separate multiple phone numbers with commas.
+              </p>
             </div>
           </div>
 

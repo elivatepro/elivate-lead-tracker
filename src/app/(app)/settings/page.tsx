@@ -11,9 +11,9 @@ import type { Workspace } from "@/lib/types";
 
 const AVAILABLE_FIELDS = [
   { key: "name", label: "Name", locked: true },
-  { key: "email", label: "Email" },
+  { key: "email", label: "Emails" },
   { key: "company", label: "Company" },
-  { key: "phone", label: "Phone" },
+  { key: "phone", label: "Phones" },
   { key: "source", label: "Source" },
   { key: "value", label: "Deal value" },
 ];

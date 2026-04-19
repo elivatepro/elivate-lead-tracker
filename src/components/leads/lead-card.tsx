@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { DollarSign, Clock, Mail } from "lucide-react";
 import type { LeadWithStage } from "@/hooks/use-leads";
+import { buildMailtoHref, splitContactValues } from "@/lib/contacts";
 
 function daysSince(date: string) {
   const ms = Date.now() - new Date(date).getTime();
@@ -33,8 +34,9 @@ function getInitials(name: string) {
 
 export function LeadCard({ lead }: { lead: LeadWithStage }) {
   const stale = isStale(lead);
-  const email = lead.email?.trim() ?? "";
-  const hasEmail = email.length > 0;
+  const emails = splitContactValues(lead.email);
+  const hasEmail = emails.length > 0;
+  const mailtoHref = buildMailtoHref(lead.email);
 
   return (
     <div
@@ -100,12 +102,16 @@ export function LeadCard({ lead }: { lead: LeadWithStage }) {
         <button
           type="button"
           disabled={!hasEmail}
-          title={hasEmail ? `Email ${lead.name}` : "No email address saved"}
+          title={
+            hasEmail
+              ? `Email ${emails.length > 1 ? `${emails.length} contacts` : lead.name}`
+              : "No email address saved"
+          }
           onPointerDown={(event) => event.stopPropagation()}
           onClick={(event) => {
             event.stopPropagation();
-            if (!hasEmail) return;
-            window.location.href = `mailto:${email}`;
+            if (!mailtoHref) return;
+            window.location.href = mailtoHref;
           }}
           className="inline-flex items-center gap-1.5 rounded-md border border-border/70 bg-background px-2.5 py-1.5 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:text-foreground disabled:cursor-not-allowed disabled:opacity-45"
         >

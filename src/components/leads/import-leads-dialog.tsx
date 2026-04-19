@@ -18,8 +18,8 @@ import * as XLSX from "xlsx";
 const LEAD_FIELDS: readonly { key: string; label: string; required?: boolean }[] = [
   { key: "name", label: "Name", required: true },
   { key: "company", label: "Company" },
-  { key: "email", label: "Email" },
-  { key: "phone", label: "Phone" },
+  { key: "email", label: "Emails" },
+  { key: "phone", label: "Phones" },
   { key: "source", label: "Source" },
   { key: "value", label: "Deal value" },
   { key: "notes", label: "Notes" },

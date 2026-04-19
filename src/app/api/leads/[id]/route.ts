@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedContext } from "@/lib/supabase/queries";
+import { normalizeContactField } from "@/lib/contacts";
 
 // GET /api/leads/[id] — get a single lead with activities
 export async function GET(
@@ -59,6 +60,13 @@ export async function PATCH(
 
   // Handle closed_at when moving to a closed stage
   const updates: Record<string, unknown> = { ...body };
+  if ("email" in body) {
+    updates.email = normalizeContactField(body.email);
+  }
+  if ("phone" in body) {
+    updates.phone = normalizeContactField(body.phone);
+  }
+
   if (body.stage_id && body.stage_id !== oldLead.stage_id) {
     const { data: newStage } = await ctx.supabase
       .from("stages")

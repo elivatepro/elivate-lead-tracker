@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedContext } from "@/lib/supabase/queries";
+import { normalizeContactField } from "@/lib/contacts";
 
 // GET /api/leads — list leads with optional filters
 export async function GET(req: Request) {
@@ -20,7 +21,10 @@ export async function GET(req: Request) {
 
   if (stage) query = query.eq("stage_id", stage);
   if (tag) query = query.contains("tags", [tag]);
-  if (search) query = query.or(`name.ilike.%${search}%,company.ilike.%${search}%,email.ilike.%${search}%`);
+  if (search)
+    query = query.or(
+      `name.ilike.%${search}%,company.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`
+    );
 
   const { data, error } = await query;
 
@@ -56,8 +60,8 @@ export async function POST(req: Request) {
       stage_id: body.stage_id,
       name: body.name,
       company: body.company || null,
-      email: body.email || null,
-      phone: body.phone || null,
+      email: normalizeContactField(body.email),
+      phone: normalizeContactField(body.phone),
       source: body.source || null,
       value: body.value || null,
       notes: body.notes || null,

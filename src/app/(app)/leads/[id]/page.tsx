@@ -30,6 +30,12 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import type { Activity } from "@/lib/types";
+import {
+  buildMailtoHref,
+  buildTelHref,
+  normalizeContactField,
+  splitContactValues,
+} from "@/lib/contacts";
 
 type LeadDetail = LeadWithStage & {
   activities: Activity[];
@@ -83,6 +89,11 @@ function activityLabel(activity: Activity) {
     default:
       return activity.type;
   }
+}
+
+function getActivityNote(activity: Activity) {
+  const payload = activity.payload as Record<string, unknown> | null;
+  return typeof payload?.note === "string" ? payload.note : null;
 }
 
 function ReminderInfo({ lead, now }: { lead: LeadDetail; now: number }) {
@@ -220,7 +231,18 @@ export default function LeadDetailPage({
   async function handleFieldBlur(field: string, value: string) {
     if (!lead) return;
     const currentValue = lead[field as keyof LeadDetail];
-    if (value === (currentValue ?? "")) return;
+    if (field === "email" || field === "phone") {
+      if (
+        normalizeContactField(value) ===
+        normalizeContactField(
+          typeof currentValue === "string" ? currentValue : null
+        )
+      ) {
+        return;
+      }
+    } else if (value === (currentValue ?? "")) {
+      return;
+    }
 
     await updateLead.mutateAsync({
       id,
@@ -250,6 +272,12 @@ export default function LeadDetailPage({
       </>
     );
   }
+
+  const noteActivities = lead.activities.filter(
+    (activity) => activity.type === "note_added" && getActivityNote(activity)
+  );
+  const emailContacts = splitContactValues(lead.email);
+  const phoneContacts = splitContactValues(lead.phone);
 
   return (
     <>
@@ -303,19 +331,72 @@ export default function LeadDetailPage({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Email</Label>
+                    <div className="space-y-1">
+                      <Label>Emails</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Separate multiple emails with commas.
+                      </p>
+                    </div>
                     <Input
-                      type="email"
+                      type="text"
                       defaultValue={lead.email ?? ""}
                       onBlur={(e) => handleFieldBlur("email", e.target.value)}
+                      placeholder="contact@company.com, sales@company.com"
                     />
+                    {emailContacts.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {emailContacts.map((email) => {
+                          const href = buildMailtoHref(email);
+
+                          return (
+                            <a
+                              key={email}
+                              href={href ?? undefined}
+                              className="rounded-md border border-border/70 bg-secondary/35 px-2 py-1 text-xs text-foreground transition-colors hover:border-primary/30 hover:bg-secondary/60"
+                            >
+                              {email}
+                            </a>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2">
-                    <Label>Phone</Label>
+                    <div className="space-y-1">
+                      <Label>Phones</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Separate multiple phone numbers with commas.
+                      </p>
+                    </div>
                     <Input
                       defaultValue={lead.phone ?? ""}
                       onBlur={(e) => handleFieldBlur("phone", e.target.value)}
+                      placeholder="+1 555 0123, +1 555 0456"
                     />
+                    {phoneContacts.length > 0 && (
+                      <div className="flex flex-wrap gap-2">
+                        {phoneContacts.map((phone) => {
+                          const href = buildTelHref(phone);
+
+                          return href ? (
+                            <a
+                              key={phone}
+                              href={href}
+                              className="rounded-md border border-border/70 bg-secondary/35 px-2 py-1 text-xs text-foreground transition-colors hover:border-primary/30 hover:bg-secondary/60"
+                            >
+                              {phone}
+                            </a>
+                          ) : (
+                            <span
+                              key={phone}
+                              className="rounded-md border border-border/70 bg-secondary/35 px-2 py-1 text-xs text-foreground"
+                            >
+                              {phone}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -370,8 +451,7 @@ export default function LeadDetailPage({
                   <div className="space-y-1">
                     <Label>Lead summary</Label>
                     <p className="text-xs text-muted-foreground">
-                      Persistent context for this lead. Activity notes appear in
-                      the timeline on the right.
+                      Persistent context for this lead.
                     </p>
                   </div>
                   <Textarea
@@ -380,6 +460,40 @@ export default function LeadDetailPage({
                     onBlur={(e) => handleFieldBlur("notes", e.target.value)}
                     placeholder="Keep a concise summary of the lead here..."
                   />
+                </div>
+
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label>Notes</Label>
+                    <p className="text-xs text-muted-foreground">
+                      Quick updates you add from the note box appear here.
+                    </p>
+                  </div>
+
+                  {noteActivities.length === 0 ? (
+                    <div className="rounded-lg border border-dashed border-border/70 bg-secondary/25 px-3 py-4 text-sm text-muted-foreground">
+                      No notes added yet.
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {noteActivities.map((activity) => {
+                        const noteText = getActivityNote(activity);
+                        if (!noteText) return null;
+
+                        return (
+                          <div
+                            key={activity.id}
+                            className="rounded-lg border border-border/70 bg-background px-3 py-3"
+                          >
+                            <p className="text-sm leading-relaxed">{noteText}</p>
+                            <p className="mt-2 text-xs text-muted-foreground">
+                              {formatDate(activity.created_at)}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -391,10 +505,9 @@ export default function LeadDetailPage({
             <Card>
               <CardContent className="pt-5 space-y-3">
                 <div className="space-y-1">
-                  <h3 className="text-sm font-medium">Add activity note</h3>
+                  <h3 className="text-sm font-medium">Add a note</h3>
                   <p className="text-xs text-muted-foreground">
-                    Adds a timestamped note to this lead&apos;s activity
-                    timeline.
+                    This will show under Notes and in the activity timeline.
                   </p>
                 </div>
                 <Textarea
@@ -410,7 +523,7 @@ export default function LeadDetailPage({
                   className="w-full"
                 >
                   <Send className="h-3.5 w-3.5 mr-1" />
-                  {isSendingNote ? "Saving..." : "Add to activity"}
+                  {isSendingNote ? "Saving..." : "Add note"}
                 </Button>
               </CardContent>
             </Card>

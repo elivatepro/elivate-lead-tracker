@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedContext } from "@/lib/supabase/queries";
+import { normalizeContactField } from "@/lib/contacts";
 import * as XLSX from "xlsx";
 
 export async function POST(req: Request) {
@@ -87,10 +88,10 @@ export async function POST(req: Request) {
         ? String(row[mapping.company] ?? "").trim() || null
         : null,
       email: mapping.email
-        ? String(row[mapping.email] ?? "").trim() || null
+        ? normalizeContactField(String(row[mapping.email] ?? ""))
         : null,
       phone: mapping.phone
-        ? String(row[mapping.phone] ?? "").trim() || null
+        ? normalizeContactField(String(row[mapping.phone] ?? ""))
         : null,
       source: mapping.source
         ? String(row[mapping.source] ?? "").trim() || null
