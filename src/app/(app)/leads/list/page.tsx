@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Search, Trash2, X } from "lucide-react";
@@ -17,6 +17,14 @@ import { Input } from "@/components/ui/input";
 import { daysSince, formatFullCurrency, getLeadInitials, getLeadSlaState } from "@/lib/lead-utils";
 
 export default function ListPage() {
+  return (
+    <Suspense fallback={<ListPageFallback />}>
+      <ListPageContent />
+    </Suspense>
+  );
+}
+
+function ListPageContent() {
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const [searchDraft, setSearchDraft] = useState<string | undefined>(undefined);
@@ -273,6 +281,24 @@ export default function ListPage() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+function ListPageFallback() {
+  return (
+    <>
+      <Header
+        eyebrow="Lead list"
+        title="A clean table for bulk work."
+        subtitle="Search, fix incomplete records, change stages in batches, and keep reminder state visible while you edit."
+      />
+
+      <div className="px-4 py-6 sm:px-6 lg:px-8">
+        <div className="surface-panel flex items-center justify-center py-16">
+          <p className="text-sm text-muted-foreground">Loading leads…</p>
         </div>
       </div>
     </>

@@ -7,7 +7,6 @@ import { KeyboardShortcuts } from "@/components/keyboard-shortcuts";
 import { NovProvider } from "@/components/nov/nov-context";
 import { NovPanel } from "@/components/nov/nov-panel";
 import { NovLauncher } from "@/components/nov/nov-launcher";
-import { LeadDetailProvider } from "@/components/leads/lead-detail-viewer";
 
 export default async function AppLayout({
   children,
@@ -32,29 +31,27 @@ export default async function AppLayout({
   return (
     <NovProvider>
       <Suspense fallback={null}>
-        <LeadDetailProvider>
-          <div className="flex h-screen bg-paper">
-            <div className="hidden lg:block">
-              <Sidebar workspace={workspace} userEmail={user.email ?? ""} />
-            </div>
-
-            <div className="flex min-w-0 flex-1 overflow-hidden">
-              <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-                <MobileNav workspace={workspace} userEmail={user.email ?? ""} />
-                <KeyboardShortcuts />
-                <main className="flex-1 overflow-y-auto">{children}</main>
-              </div>
-              {/* Desktop rail */}
-              <NovPanel variant="rail" />
-            </div>
-
-            {/* Mobile / tablet overlay — hidden when the desktop rail is visible */}
-            <div className="xl:hidden">
-              <NovPanel variant="overlay" />
-            </div>
-            <NovLauncher />
+        <div className="flex h-screen bg-paper">
+          <div className="hidden lg:block">
+            <Sidebar workspace={workspace} userEmail={user.email ?? ""} />
           </div>
-        </LeadDetailProvider>
+
+          <div className="flex min-w-0 flex-1 overflow-hidden">
+            <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+              <MobileNav workspace={workspace} userEmail={user.email ?? ""} />
+              <KeyboardShortcuts />
+              <main className="flex-1 overflow-y-auto">{children}</main>
+            </div>
+            {/* Desktop rail */}
+            <NovPanel variant="rail" />
+          </div>
+
+          {/* Mobile / tablet overlay — hidden when the desktop rail is visible */}
+          <div className="xl:hidden">
+            <NovPanel variant="overlay" />
+          </div>
+          <NovLauncher />
+        </div>
       </Suspense>
     </NovProvider>
   );

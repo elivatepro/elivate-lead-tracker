@@ -1,8 +1,10 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { CommandPalette } from "@/components/command/command-palette";
+import { LeadDetailProvider } from "@/components/leads/lead-detail-viewer";
 import "./globals.css";
 
 const inter = Inter({
@@ -67,9 +69,13 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
         <QueryProvider>
-          {children}
-          <CommandPalette />
-          <Toaster />
+          <Suspense fallback={null}>
+            <LeadDetailProvider>
+              {children}
+              <CommandPalette />
+              <Toaster />
+            </LeadDetailProvider>
+          </Suspense>
         </QueryProvider>
       </body>
     </html>
