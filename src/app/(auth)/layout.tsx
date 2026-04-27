@@ -6,24 +6,24 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background px-4 py-12">
-      <div className="w-full max-w-[420px] space-y-8">
-        <div className="flex flex-col items-center gap-3">
+    <div className="min-h-screen bg-background px-4 py-8 sm:px-6">
+      <div className="mx-auto flex min-h-[calc(100vh-4rem)] w-full max-w-md flex-col items-center justify-center">
+        <div className="mb-8 flex items-center gap-3">
           <Image
             src="/elivate-logo-icon.svg"
             alt="Elivate"
-            width={44}
-            height={44}
+            width={42}
+            height={42}
             priority
           />
-          <div className="text-center">
-            <h1 className="text-3xl font-semibold tracking-tight text-foreground">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               LeadTracker
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">by Elivate</p>
+            <p className="text-sm text-muted-foreground">by Elivate</p>
           </div>
         </div>
-        {children}
+        <div className="w-full">{children}</div>
       </div>
     </div>
   );

@@ -43,8 +43,9 @@ export default async function SnoozePage({
   }
 
   // Set snoozed_until to 3 days from now
+  const snoozeStart = new Date();
   const snoozedUntil = new Date(
-    Date.now() + 3 * 24 * 60 * 60 * 1000
+    snoozeStart.getTime() + 3 * 24 * 60 * 60 * 1000
   ).toISOString();
 
   await supabase

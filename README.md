@@ -60,6 +60,7 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 CRON_SECRET=random-32-char-string
 SNOOZE_TOKEN_SECRET=random-32-char-string
 RESEND_API_KEY=re_your_resend_key
+OPENAI_API_KEY=sk_your_openai_key
 ```
 
 3. Run the database migration in your Supabase SQL Editor:

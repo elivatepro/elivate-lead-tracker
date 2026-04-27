@@ -1,20 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod/v4";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { signUp } from "@/app/(auth)/actions";
 
 const signupSchema = z
@@ -34,7 +29,7 @@ export default function SignupPage() {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
+  const [verificationSent, setVerificationSent] = useState(false);
   const {
     register,
     handleSubmit,
@@ -52,9 +47,14 @@ export default function SignupPage() {
     setError(null);
 
     const result = await signUp(data.email, data.password);
-
     if (result.error) {
       setError(result.error);
+      setLoading(false);
+      return;
+    }
+
+    if (result.needsEmailVerification) {
+      setVerificationSent(true);
       setLoading(false);
       return;
     }
@@ -63,14 +63,36 @@ export default function SignupPage() {
     router.refresh();
   }
 
+  if (verificationSent) {
+    return (
+      <Card className="rounded-[4px] border-border/70 bg-white/85">
+        <CardHeader className="space-y-3">
+          <CardTitle className="font-serif text-4xl tracking-[-0.04em]">Check your email</CardTitle>
+          <CardDescription className="text-sm leading-6">
+            Your account is created. Confirm your email from the message we sent, then you’ll be brought back into the app automatically.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="rounded-[3px] border border-primary/15 bg-primary/5 p-4 text-sm leading-6 text-foreground">
+            After you click the verification link, the callback will sign you in and finish provisioning your workspace if needed.
+          </div>
+          <p className="text-center text-sm text-muted-foreground">
+            Already verified?{" "}
+            <Link href="/login" className="font-medium text-primary hover:underline">
+              Go to sign in
+            </Link>
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-xl font-semibold">
-          Create your account
-        </CardTitle>
-        <CardDescription>
-          Start tracking your leads in under 60 seconds.
+    <Card className="rounded-[4px] border-border/70 bg-white/85">
+      <CardHeader className="space-y-3">
+        <CardTitle className="font-serif text-4xl tracking-[-0.04em]">Create your account</CardTitle>
+        <CardDescription className="text-sm leading-6">
+          Start tracking leads in a calmer workspace built around reminder timing and readable momentum.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-5">
@@ -82,62 +104,52 @@ export default function SignupPage() {
               type="email"
               placeholder="you@example.com"
               autoComplete="email"
+              className="h-11 rounded-[3px]"
               {...register("email")}
             />
-            {errors.email && (
-              <p className="text-sm text-destructive">{errors.email.message}</p>
-            )}
+            {errors.email ? <p className="text-sm text-destructive">{errors.email.message}</p> : null}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="password">Password</Label>
-            <Input
+            <PasswordInput
               id="password"
-              type="password"
               placeholder="At least 8 characters"
               autoComplete="new-password"
+              className="h-11 rounded-[3px]"
               {...register("password")}
             />
-            {errors.password && (
-              <p className="text-sm text-destructive">
-                {errors.password.message}
-              </p>
-            )}
+            {errors.password ? <p className="text-sm text-destructive">{errors.password.message}</p> : null}
           </div>
 
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">Confirm password</Label>
-            <Input
+            <PasswordInput
               id="confirmPassword"
-              type="password"
               placeholder="Repeat your password"
               autoComplete="new-password"
+              className="h-11 rounded-[3px]"
               {...register("confirmPassword")}
             />
-            {errors.confirmPassword && (
-              <p className="text-sm text-destructive">
-                {errors.confirmPassword.message}
-              </p>
-            )}
+            {errors.confirmPassword ? (
+              <p className="text-sm text-destructive">{errors.confirmPassword.message}</p>
+            ) : null}
           </div>
 
-          {error && (
-            <div className="text-sm text-destructive bg-destructive/5 border border-destructive/20 p-3 rounded-lg">
+          {error ? (
+            <div className="rounded-[3px] border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
               {error}
             </div>
-          )}
+          ) : null}
 
-          <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account..." : "Create account"}
+          <Button type="submit" className="w-full rounded-[3px]" disabled={loading}>
+            {loading ? "Creating account…" : "Create account"}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground">
           Already have an account?{" "}
-          <Link
-            href="/login"
-            className="text-primary font-medium hover:underline"
-          >
+          <Link href="/login" className="font-medium text-primary hover:underline">
             Sign in
           </Link>
         </p>

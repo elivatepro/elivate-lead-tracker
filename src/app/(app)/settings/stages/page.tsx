@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   DndContext,
-  closestCenter,
   PointerSensor,
   useSensor,
   useSensors,
@@ -12,112 +11,91 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
+  arrayMove,
   useSortable,
   verticalListSortingStrategy,
-  arrayMove,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { GripVertical, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { useStages } from "@/hooks/use-stages";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
-import { GripVertical, Trash2, Plus } from "lucide-react";
 import type { Stage } from "@/lib/types";
 
 function SortableStageRow({
   stage,
   onUpdate,
   onDelete,
-  isDeleting: isDeletingProp,
+  isDeleting,
 }: {
   stage: Stage;
   onUpdate: (id: string, updates: Partial<Stage>) => void;
   onDelete: (id: string) => void;
   isDeleting: boolean;
 }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: stage.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-    opacity: isDragging ? 0.5 : 1,
-  };
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: stage.id });
 
   return (
     <div
       ref={setNodeRef}
-      style={style}
-      className="flex items-center gap-3 py-3 px-2 border-b border-border last:border-b-0"
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+      }}
+      className="grid gap-3 rounded-[3px] border border-border/70 bg-white/75 px-4 py-4 md:grid-cols-[auto_1fr_110px_90px_auto]"
     >
-      <button
-        {...attributes}
-        {...listeners}
-        className="cursor-grab text-muted-foreground hover:text-foreground touch-none"
-      >
-        <GripVertical className="h-4 w-4" />
+      <button {...attributes} {...listeners} className="text-muted-foreground transition-colors hover:text-foreground">
+        <GripVertical className="h-5 w-5" />
       </button>
 
       <Input
         defaultValue={stage.name}
         onBlur={(e) => {
-          if (e.target.value !== stage.name) {
-            onUpdate(stage.id, { name: e.target.value });
-          }
+          if (e.target.value !== stage.name) onUpdate(stage.id, { name: e.target.value });
         }}
-        className="flex-1"
-        placeholder="Stage name"
+        className="h-11 rounded-[3px]"
       />
 
-      <div className="flex items-center gap-1.5">
-        <Input
-          type="number"
-          defaultValue={stage.sla_days ?? ""}
-          onBlur={(e) => {
-            const val = e.target.value ? parseInt(e.target.value) : null;
-            if (val !== stage.sla_days) {
-              onUpdate(stage.id, { sla_days: val });
-            }
-          }}
-          className="w-20 text-center"
-          placeholder="SLA"
-        />
-        <span className="text-xs text-muted-foreground whitespace-nowrap">
-          days
-        </span>
-      </div>
+      <Input
+        type="number"
+        defaultValue={stage.sla_days ?? ""}
+        onBlur={(e) => {
+          const value = e.target.value ? parseInt(e.target.value, 10) : null;
+          if (value !== stage.sla_days) onUpdate(stage.id, { sla_days: value });
+        }}
+        className="h-11 rounded-[3px] text-center"
+        placeholder="SLA"
+      />
 
-      <label className="flex items-center gap-1.5 cursor-pointer whitespace-nowrap">
+      <label className="flex items-center justify-center gap-2 rounded-[3px] border border-border/70 bg-secondary/35 px-3 py-2 text-sm">
         <input
           type="checkbox"
           checked={stage.is_closed}
           onChange={(e) => onUpdate(stage.id, { is_closed: e.target.checked })}
-          className="h-4 w-4 rounded border-border accent-primary"
+          className="h-4 w-4 rounded accent-primary"
         />
-        <span className="text-xs text-muted-foreground">Closed</span>
+        Closed
       </label>
 
-      <button
+      <Button
+        variant="ghost"
+        className="rounded-[3px] text-destructive hover:bg-destructive/5 hover:text-destructive"
+        disabled={isDeleting}
         onClick={() => onDelete(stage.id)}
-        disabled={isDeletingProp}
-        className="text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
       >
         <Trash2 className="h-4 w-4" />
-      </button>
+      </Button>
     </div>
   );
 }
 
 export default function StagesSettingsPage() {
   const queryClient = useQueryClient();
-  const { data: stages, isLoading } = useStages();
+  const { data: stages = [], isLoading } = useStages();
   const [newStageName, setNewStageName] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -128,13 +106,7 @@ export default function StagesSettingsPage() {
   );
 
   const updateStage = useMutation({
-    mutationFn: async ({
-      id,
-      updates,
-    }: {
-      id: string;
-      updates: Partial<Stage>;
-    }) => {
+    mutationFn: async ({ id, updates }: { id: string; updates: Partial<Stage> }) => {
       const res = await fetch(`/api/stages/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -143,9 +115,7 @@ export default function StagesSettingsPage() {
       if (!res.ok) throw new Error("Failed to update stage");
       return res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["stages"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["stages"] }),
   });
 
   const createStage = useMutation({
@@ -193,121 +163,83 @@ export default function StagesSettingsPage() {
       });
       if (!res.ok) throw new Error("Failed to reorder");
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["stages"] });
-    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["stages"] }),
   });
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-    if (!over || active.id === over.id || !stages) return;
+    if (!over || active.id === over.id || !stages.length) return;
 
-    const oldIndex = stages.findIndex((s) => s.id === active.id);
-    const newIndex = stages.findIndex((s) => s.id === over.id);
+    const oldIndex = stages.findIndex((stage) => stage.id === active.id);
+    const newIndex = stages.findIndex((stage) => stage.id === over.id);
     const reordered = arrayMove(stages, oldIndex, newIndex);
 
-    reorderStages.mutate(
-      reordered.map((s, i) => ({ id: s.id, position: i + 1 }))
-    );
-  }
-
-  function handleUpdate(id: string, updates: Partial<Stage>) {
-    updateStage.mutate({ id, updates });
-  }
-
-  function handleDelete(id: string) {
-    if (confirm("Delete this stage? Leads in it must be moved first.")) {
-      setDeletingId(id);
-      deleteStage.mutate(id);
-    }
-  }
-
-  function handleAddStage() {
-    if (!newStageName.trim()) return;
-    createStage.mutate(newStageName.trim());
+    reorderStages.mutate(reordered.map((stage, index) => ({ id: stage.id, position: index + 1 })));
   }
 
   if (isLoading) {
-    return (
-      <p className="text-sm text-muted-foreground text-center py-8">
-        Loading...
-      </p>
-    );
+    return <p className="py-12 text-center text-sm text-muted-foreground">Loading stages…</p>;
   }
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardContent className="pt-5">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Pipeline stages</h2>
-            <p className="text-sm text-muted-foreground mt-1">
-              Drag to reorder. Set an SLA (in days) to trigger follow-up
-              reminders. Mark a stage as &ldquo;Closed&rdquo; to exclude it from
-              reminders.
-            </p>
-          </div>
+      <Card className="rounded-[4px] border-border/70 bg-white/80">
+        <CardHeader>
+          <p className="eyebrow-label">Pipeline configuration</p>
+          <CardTitle className="mt-2 font-serif text-3xl tracking-[-0.04em]">
+            Stages and SLAs
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-5">
+          <p className="text-sm leading-6 text-muted-foreground">
+            Reorder stages to match the working flow. SLA values control reminder timing, and closed stages are automatically excluded from follow-up prompts.
+          </p>
 
-          {/* Column headers */}
-          <div className="flex items-center gap-3 px-2 pb-2 text-xs text-muted-foreground font-medium">
-            <div className="w-4" />
-            <div className="flex-1">Name</div>
-            <div className="w-20 text-center">SLA</div>
-            <div className="w-4" />
-            <div className="w-16" />
-            <div className="w-4" />
-          </div>
-
-          {stages && stages.length > 0 ? (
-            <DndContext
-              sensors={sensors}
-              collisionDetection={closestCenter}
-              onDragEnd={handleDragEnd}
-            >
-              <SortableContext
-                items={stages.map((s) => s.id)}
-                strategy={verticalListSortingStrategy}
-              >
+          <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
+            <SortableContext items={stages.map((stage) => stage.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-3">
                 {stages.map((stage) => (
                   <SortableStageRow
                     key={stage.id}
                     stage={stage}
-                    onUpdate={handleUpdate}
-                    onDelete={handleDelete}
+                    onUpdate={(id, updates) => updateStage.mutate({ id, updates })}
+                    onDelete={(id) => {
+                      if (confirm("Delete this stage? Leads in it must be moved first.")) {
+                        setDeletingId(id);
+                        deleteStage.mutate(id);
+                      }
+                    }}
                     isDeleting={deletingId === stage.id}
                   />
                 ))}
-              </SortableContext>
-            </DndContext>
-          ) : (
-            <p className="text-sm text-muted-foreground text-center py-6">
-              No stages yet. Add one below.
-            </p>
-          )}
+              </div>
+            </SortableContext>
+          </DndContext>
         </CardContent>
       </Card>
 
-      {/* Add new stage */}
-      <Card>
-        <CardContent className="pt-5">
-          <h3 className="text-sm font-medium mb-3">Add a stage</h3>
-          <div className="flex gap-2">
-            <Input
-              value={newStageName}
-              onChange={(e) => setNewStageName(e.target.value)}
-              placeholder="Stage name..."
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleAddStage();
-              }}
-            />
-            <Button
-              onClick={handleAddStage}
-              disabled={!newStageName.trim() || createStage.isPending}
-            >
-              <Plus className="h-4 w-4 mr-1" />
-              Add
-            </Button>
-          </div>
+      <Card className="rounded-[4px] border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,241,231,0.94))]">
+        <CardHeader>
+          <p className="eyebrow-label">Add stage</p>
+          <CardTitle className="mt-2 font-serif text-3xl tracking-[-0.04em]">
+            Extend the pipeline
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3 sm:flex-row">
+          <Input
+            value={newStageName}
+            onChange={(e) => setNewStageName(e.target.value)}
+            placeholder="Discovery, Proposal, Negotiation…"
+            className="h-11 rounded-[3px]"
+          />
+          <Button
+            className="rounded-[3px]"
+            disabled={!newStageName.trim() || createStage.isPending}
+            onClick={() => createStage.mutate(newStageName.trim())}
+          >
+            <Plus className="h-4 w-4" />
+            {createStage.isPending ? "Adding…" : "Add stage"}
+          </Button>
         </CardContent>
       </Card>
     </div>

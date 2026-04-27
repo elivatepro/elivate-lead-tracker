@@ -2,11 +2,12 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Card, CardContent } from "@/components/ui/card";
+import { toast } from "sonner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 
 export default function ProfileSettingsPage() {
   const { data: profile } = useQuery<{ email: string }>({
@@ -38,7 +39,6 @@ export default function ProfileSettingsPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password }),
     });
-
     setIsSaving(false);
 
     if (!res.ok) {
@@ -53,48 +53,59 @@ export default function ProfileSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <Card>
-        <CardContent className="pt-5 space-y-4">
-          <h2 className="text-lg font-semibold">Profile</h2>
+      <Card className="rounded-[4px] border-border/70 bg-white/80">
+        <CardHeader>
+          <p className="eyebrow-label">Profile</p>
+          <CardTitle className="mt-2 font-serif text-3xl tracking-[-0.04em]">
+            Account details
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label>Email</Label>
-            <Input value={profile?.email ?? ""} disabled />
-            <p className="text-xs text-muted-foreground">
-              Your email is tied to your account and cannot be changed here.
+            <Input value={profile?.email ?? ""} disabled className="h-11 rounded-[3px]" />
+            <p className="text-sm text-muted-foreground">
+              Your account email is managed through authentication and can’t be edited from this screen.
             </p>
           </div>
         </CardContent>
       </Card>
 
-      <Card>
-        <CardContent className="pt-5 space-y-4">
-          <h2 className="text-lg font-semibold">Change password</h2>
+      <Card className="rounded-[4px] border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,241,231,0.94))]">
+        <CardHeader>
+          <p className="eyebrow-label">Security</p>
+          <CardTitle className="mt-2 font-serif text-3xl tracking-[-0.04em]">
+            Change password
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="new-password">New password</Label>
-            <Input
+            <PasswordInput
               id="new-password"
-              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimum 8 characters"
+              className="h-11 rounded-[3px]"
             />
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirm-password">Confirm password</Label>
-            <Input
+            <PasswordInput
               id="confirm-password"
-              type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               placeholder="Re-enter your password"
+              className="h-11 rounded-[3px]"
             />
           </div>
           <div className="flex justify-end">
             <Button
+              className="rounded-[3px]"
               onClick={handleChangePassword}
               disabled={!password || !confirmPassword || isSaving}
             >
-              {isSaving ? "Updating..." : "Update password"}
+              {isSaving ? "Updating…" : "Update password"}
             </Button>
           </div>
         </CardContent>

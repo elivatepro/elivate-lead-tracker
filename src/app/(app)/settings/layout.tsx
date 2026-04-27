@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/header";
 
 const tabs = [
   { href: "/settings", label: "General" },
+  { href: "/settings/nov", label: "Nov" },
   { href: "/settings/stages", label: "Stages" },
   { href: "/settings/profile", label: "Profile" },
 ];
@@ -19,9 +20,13 @@ export default function SettingsLayout({
 
   return (
     <>
-      <Header title="Settings" />
-      <div className="p-4 sm:p-6 max-w-3xl mx-auto space-y-6">
-        <nav className="flex gap-1 border-b border-border">
+      <Header
+        eyebrow="Settings"
+        title="Tune the workspace around your process."
+        subtitle="Adjust workspace defaults, stage timing, and account details without losing the editorial rhythm of the app."
+      />
+      <div className="space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+        <nav className="inline-flex rounded-[3px] border border-border/70 bg-white/80 p-1 shadow-sm">
           {tabs.map((tab) => {
             const isActive =
               tab.href === "/settings"
@@ -32,10 +37,10 @@ export default function SettingsLayout({
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+                className={`rounded-[3px] px-4 py-2 text-sm transition-colors ${
                   isActive
-                    ? "border-primary text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {tab.label}
@@ -43,7 +48,7 @@ export default function SettingsLayout({
             );
           })}
         </nav>
-        {children}
+        <div className="max-w-4xl">{children}</div>
       </div>
     </>
   );

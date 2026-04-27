@@ -7,7 +7,6 @@ import {
   Button,
   Hr,
   Section,
-  Img,
 } from "@react-email/components";
 
 export type StaleLead = {

@@ -25,49 +25,86 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
 
-  /* Custom app colors */
-  --color-stale: #dc2626;
-  --color-won: #16a34a;
-  --color-lost: #7a7265;
-  --color-gold: #c4960a;
+  /* Editorial palette — pulled forward from prototype tokens */
+  --color-paper: var(--paper);
+  --color-paper-2: var(--paper-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-ink-4: var(--ink-4);
+  --color-ember: var(--ember);
+  --color-ember-tint: var(--ember-tint);
+  --color-gold: var(--gold);
+  --color-stale: var(--stale);
+  --color-won: var(--won);
+  --color-lost: var(--lost);
+  --color-line: var(--line);
+  --color-line-2: var(--line-2);
+  --color-line-3: var(--line-3);
 
   /* Fonts */
-  --font-sans: var(--font-lexend);
-  --font-serif: var(--font-lexend);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter);
+  --font-serif: var(--font-source-serif);
+  --font-mono: var(--font-jetbrains);
 
-  /* Radius */
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  /* Radius — editorial / square-ish. shadcn primitives inherit from --radius. */
+  --radius-sm: 2px;
+  --radius-md: 3px;
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-xl: calc(var(--radius) + 2px);
+  --radius-2xl: calc(var(--radius) + 4px);
+  --radius-3xl: calc(var(--radius) + 6px);
+  --radius-4xl: calc(var(--radius) + 8px);
 }
 
 :root {
-  /* LeadTracker / Elivate warm editorial palette */
-  --background: #fdfaf3;
-  --foreground: #1a1714;
-  --card: #ffffff;
-  --card-foreground: #1a1714;
-  --popover: #ffffff;
-  --popover-foreground: #1a1714;
-  --primary: #ff7f4f;
+  /* Paper / ink — editorial neutrals */
+  --paper: #f8f1e6;
+  --paper-2: #f3eadb;
+  --ink: #1a1714;
+  --ink-2: #3d342d;
+  --ink-3: #5a4f44;
+  --ink-4: #847868;
+
+  /* Lines */
+  --line: #e3d6c2;
+  --line-2: #d4c4ad;
+  --line-3: #b9a78d;
+
+  /* Accents */
+  --ember: #e56a34;
+  --ember-tint: rgba(229, 106, 52, 0.12);
+  --gold: #c08d2b;
+  --stale: #b94f2e;
+  --won: #16a34a;
+  --lost: #6f665a;
+
+  /* shadcn surface tokens, mapped to editorial palette */
+  --background: var(--paper);
+  --foreground: var(--ink);
+  --card: #fffdf9;
+  --card-foreground: var(--ink);
+  --popover: #fffdf9;
+  --popover-foreground: var(--ink);
+  --primary: var(--ember);
   --primary-foreground: #ffffff;
-  --secondary: #f5f0e6;
-  --secondary-foreground: #3d3830;
-  --muted: #f5f0e6;
-  --muted-foreground: #7a7265;
-  --accent: #c4960a;
-  --accent-foreground: #1a1714;
-  --destructive: #dc2626;
+  --secondary: #f2e7d8;
+  --secondary-foreground: var(--ink-2);
+  --muted: #efe5d9;
+  --muted-foreground: var(--ink-4);
+  --accent: var(--gold);
+  --accent-foreground: var(--ink);
+  --destructive: var(--stale);
   --destructive-foreground: #ffffff;
-  --border: #e8e2d4;
-  --input: #e8e2d4;
-  --ring: #ff7f4f;
-  --radius: 0.5rem;
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--ember);
+  --radius: 4px;
+
+  /* Editorial shadows */
+  --shadow-1: 0 1px 0 rgba(255, 255, 255, 0.8), 0 1px 2px rgba(38, 28, 18, 0.04);
+  --shadow-2: 0 14px 34px rgba(38, 28, 18, 0.06);
+  --shadow-3: 0 22px 60px rgba(38, 28, 18, 0.10);
 }
 
 @layer base {
@@ -76,20 +113,22 @@
   }
   body {
     @apply bg-background text-foreground antialiased;
+    background-image:
+      radial-gradient(circle at top left, rgba(229, 106, 52, 0.10), transparent 28%),
+      radial-gradient(circle at right 18%, rgba(192, 141, 43, 0.10), transparent 22%),
+      linear-gradient(180deg, rgba(255, 253, 249, 0.6), rgba(248, 241, 230, 0.92));
   }
   html {
     @apply font-sans;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01", "ss03";
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Refined selection color */
   ::selection {
-    background-color: rgba(255, 127, 79, 0.15);
+    background-color: rgba(229, 106, 52, 0.22);
   }
 
-  /* Smoother scrollbars */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -104,4 +143,91 @@
   ::-webkit-scrollbar-thumb:hover {
     background: rgba(122, 114, 101, 0.35);
   }
+
+  h1,
+  h2,
+  h3 {
+    letter-spacing: -0.025em;
+  }
+
+  /* Tabular numerics anywhere we mark a node `.numeric` (currency, counts, dates) */
+  .numeric,
+  [data-numeric="true"],
+  kbd {
+    font-variant-numeric: tabular-nums;
+  }
 }
+
+@layer utilities {
+  .surface-panel {
+    @apply rounded-[4px] border border-border/70 bg-white/80 shadow-[0_14px_40px_rgba(39,29,18,0.05)] backdrop-blur-sm;
+  }
+
+  .eyebrow-label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground;
+  }
+
+  .font-display {
+    font-family: var(--font-serif);
+    font-feature-settings: "ss01", "ss02";
+  }
+
+  .ember-eyebrow {
+    @apply inline-flex items-center gap-2 text-[11px] font-medium uppercase;
+    letter-spacing: 0.16em;
+    color: var(--ember);
+  }
+  .ember-eyebrow::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    background: var(--ember);
+  }
+
+  /* Editorial display heading: serif with italic accent for emphasized words */
+  .display-heading em {
+    font-style: italic;
+    color: var(--ember);
+  }
+}
+
+/* Command palette (cmdk) — neutral classes used by CommandPalette */
+.cmdk-group [cmdk-group-heading] {
+  padding: 10px 12px 6px;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+.cmdk-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  margin: 1px 0;
+  border-radius: 8px;
+  cursor: pointer;
+  user-select: none;
+  font-size: 13px;
+  color: var(--ink);
+}
+.cmdk-item[data-selected="true"] {
+  background: var(--paper-2);
+}
+.cmdk-item[data-selected="true"] kbd {
+  background: white;
+}
+
+/* Default kbd: editorial, square-ish */
+kbd {
+  border: 1px solid var(--line);
+  background: white;
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+

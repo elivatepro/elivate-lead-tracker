@@ -1,79 +1,55 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { Search, Trash2, X } from "lucide-react";
 import { Header } from "@/components/layout/header";
-import {
-  useLeads,
-  useUpdateLead,
-  useDeleteLead,
-  type LeadWithStage,
-} from "@/hooks/use-leads";
+import { LeadViewNav } from "@/components/layout/lead-view-nav";
+import { useLeads, useUpdateLead } from "@/hooks/use-leads";
 import { useStages } from "@/hooks/use-stages";
 import { NewLeadDialog } from "@/components/leads/new-lead-dialog";
 import { ImportLeadsDialog } from "@/components/leads/import-leads-dialog";
+import { useLeadDetail } from "@/components/leads/lead-detail-viewer";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useQueryClient } from "@tanstack/react-query";
-import {
-  LayoutGrid,
-  List,
-  AlertCircle,
-  Search,
-  Trash2,
-  DollarSign,
-  Clock,
-  X,
-} from "lucide-react";
-
-function daysSince(date: string) {
-  const ms = Date.now() - new Date(date).getTime();
-  const days = Math.floor(ms / 86400000);
-  if (days === 0) return "today";
-  if (days === 1) return "1d ago";
-  return `${days}d ago`;
-}
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
+import { daysSince, formatFullCurrency, getLeadInitials, getLeadSlaState } from "@/lib/lead-utils";
 
 export default function ListPage() {
   const searchParams = useSearchParams();
-  const [search, setSearch] = useState(searchParams.get("q") || "");
+  const queryClient = useQueryClient();
+  const [searchDraft, setSearchDraft] = useState<string | undefined>(undefined);
   const [stageFilter, setStageFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const queryClient = useQueryClient();
+  const { data: stages = [] } = useStages();
+  const updateLead = useUpdateLead();
+  const { openLead } = useLeadDetail();
+  const search = searchDraft ?? searchParams.get("q") ?? "";
 
-  useEffect(() => {
-    const q = searchParams.get("q");
-    if (q) setSearch(q);
-  }, [searchParams]);
-
-  const { data: leads, isLoading } = useLeads({
+  const { data: leads = [], isLoading } = useLeads({
     search: search || undefined,
     stage: stageFilter || undefined,
   });
-  const { data: stages } = useStages();
-  const deleteLead = useDeleteLead();
-  const updateLead = useUpdateLead();
 
-  const allSelected =
-    leads && leads.length > 0 && selected.size === leads.length;
+  const allSelected = leads.length > 0 && selected.size === leads.length;
+  const selectedCount = selected.size;
+
+  const selectedStats = useMemo(() => {
+    const picked = leads.filter((lead) => selected.has(lead.id));
+    return {
+      count: picked.length,
+      value: picked.reduce((sum, lead) => sum + (lead.value ?? 0), 0),
+    };
+  }, [leads, selected]);
 
   function toggleAll() {
     if (allSelected) {
       setSelected(new Set());
-    } else {
-      setSelected(new Set(leads?.map((l) => l.id)));
+      return;
     }
+
+    setSelected(new Set(leads.map((lead) => lead.id)));
   }
 
   function toggleOne(id: string) {
@@ -84,13 +60,12 @@ export default function ListPage() {
   }
 
   async function bulkDelete() {
-    if (
-      !confirm(`Delete ${selected.size} lead${selected.size > 1 ? "s" : ""}?`)
-    )
-      return;
+    if (!confirm(`Delete ${selectedCount} lead${selectedCount > 1 ? "s" : ""}?`)) return;
+
     for (const id of selected) {
       await fetch(`/api/leads/${id}`, { method: "DELETE" });
     }
+
     setSelected(new Set());
     queryClient.invalidateQueries({ queryKey: ["leads"] });
     queryClient.invalidateQueries({ queryKey: ["dashboard"] });
@@ -104,6 +79,7 @@ export default function ListPage() {
         body: JSON.stringify({ stage_id: stageId }),
       });
     }
+
     setSelected(new Set());
     queryClient.invalidateQueries({ queryKey: ["leads"] });
     queryClient.invalidateQueries({ queryKey: ["dashboard"] });
@@ -111,307 +87,194 @@ export default function ListPage() {
 
   return (
     <>
-      <Header title="Leads" />
-      <div className="flex flex-col h-[calc(100vh-3rem)] sm:h-[calc(100vh-3.5rem)]">
-        {/* Toolbar */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border/60">
-          <div className="flex items-center gap-1">
-            <Link
-              href="/leads"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] rounded-md text-muted-foreground hover:bg-secondary transition-colors"
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Board</span>
-            </Link>
-            <Link
-              href="/leads/list"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-md bg-secondary text-foreground"
-            >
-              <List className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">List</span>
-            </Link>
-            <Link
-              href="/leads/stale"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] rounded-md text-muted-foreground hover:bg-secondary transition-colors"
-            >
-              <AlertCircle className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Stale</span>
-            </Link>
-          </div>
+      <Header
+        eyebrow="Lead list"
+        title="A clean table for bulk work."
+        subtitle="Search, fix incomplete records, change stages in batches, and keep reminder state visible while you edit."
+        actions={
           <div className="flex items-center gap-2">
             <ImportLeadsDialog />
             <NewLeadDialog />
           </div>
+        }
+      />
+
+      <div className="space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <LeadViewNav />
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+            {[
+              { label: "Visible leads", value: leads.length },
+              { label: "Selected", value: selectedStats.count },
+              { label: "Selected value", value: formatFullCurrency(selectedStats.value) },
+            ].map((item) => (
+              <div key={item.label} className="rounded-[3px] border border-border/70 bg-white/75 px-4 py-3">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
+                <p className="mt-2 font-serif text-2xl tracking-[-0.03em]">{item.value}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
-        {/* Bulk action bar */}
-        {selected.size > 0 && (
-          <div className="flex items-center gap-3 px-4 sm:px-6 py-2 border-b border-primary/20 bg-primary/5">
-            <span className="text-[13px] font-medium text-primary">
-              {selected.size} selected
-            </span>
+        {selectedCount > 0 ? (
+          <div className="surface-panel flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center">
+            <div>
+              <p className="text-sm font-medium text-foreground">{selectedCount} lead{selectedCount > 1 ? "s" : ""} selected</p>
+              <p className="text-sm text-muted-foreground">Move them together or clear them out after review.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
+              <select
+                className="h-10 rounded-[3px] border border-input bg-white px-4 text-sm"
+                defaultValue=""
+                onChange={(e) => {
+                  if (e.target.value) bulkChangeStage(e.target.value);
+                  e.target.value = "";
+                }}
+              >
+                <option value="" disabled>
+                  Move to stage…
+                </option>
+                {stages.map((stage) => (
+                  <option key={stage.id} value={stage.id}>
+                    {stage.name}
+                  </option>
+                ))}
+              </select>
+              <Button variant="destructive" className="rounded-[3px]" onClick={bulkDelete}>
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </Button>
+              <Button variant="ghost" className="rounded-[3px]" onClick={() => setSelected(new Set())}>
+                <X className="h-4 w-4" />
+                Clear
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        <div className="surface-panel space-y-4 p-4 sm:p-5">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div className="relative w-full max-w-md">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/50" />
+              <Input
+                placeholder="Search by lead, company, email, or source"
+                className="h-11 rounded-[3px] pl-10"
+                value={search}
+                onChange={(e) => setSearchDraft(e.target.value)}
+              />
+            </div>
             <select
-              className="h-7 rounded-md border border-input bg-white px-2 py-0.5 text-[12px]"
-              defaultValue=""
-              onChange={(e) => {
-                if (e.target.value) bulkChangeStage(e.target.value);
-                e.target.value = "";
-              }}
+              className="h-11 rounded-[3px] border border-input bg-white px-4 text-sm"
+              value={stageFilter}
+              onChange={(e) => setStageFilter(e.target.value)}
             >
-              <option value="" disabled>
-                Move to...
-              </option>
-              {stages?.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
+              <option value="">All stages</option>
+              {stages.map((stage) => (
+                <option key={stage.id} value={stage.id}>
+                  {stage.name}
                 </option>
               ))}
             </select>
-            <Button
-              variant="destructive"
-              size="xs"
-              onClick={bulkDelete}
-            >
-              <Trash2 className="h-3 w-3 mr-1" />
-              Delete
-            </Button>
-            <button
-              onClick={() => setSelected(new Set())}
-              className="ml-auto text-muted-foreground hover:text-foreground"
-            >
-              <X className="h-4 w-4" />
-            </button>
           </div>
-        )}
 
-        {/* Filters */}
-        <div className="flex items-center gap-3 px-4 sm:px-6 py-3 border-b border-border/40 bg-card/30">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
-            <Input
-              placeholder="Search leads..."
-              className="pl-9 h-9"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
-          </div>
-          <select
-            className="h-9 rounded-lg border border-input bg-white px-3 py-1.5 text-[13px]"
-            value={stageFilter}
-            onChange={(e) => setStageFilter(e.target.value)}
-          >
-            <option value="">All stages</option>
-            {stages?.map((s) => (
-              <option key={s.id} value={s.id}>
-                {s.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <p className="text-muted-foreground text-sm">Loading...</p>
+            <div className="flex items-center justify-center py-16">
+              <p className="text-sm text-muted-foreground">Loading leads…</p>
             </div>
-          ) : !leads?.length ? (
+          ) : !leads.length ? (
             <EmptyState
-              title="No leads found"
-              description={
-                search
-                  ? "Try a different search term."
-                  : "Add your first lead to get started."
-              }
+              title="No leads match this view"
+              description={search ? "Try a broader search or clear the active stage filter." : "Add your first lead to start building the table."}
             />
           ) : (
-            <>
-              {/* Desktop table */}
-              <table className="w-full hidden md:table">
-                <thead>
-                  <tr className="border-b border-border/40 text-[10px] text-muted-foreground/60 uppercase tracking-[0.08em] font-semibold">
-                    <th className="text-left px-6 py-2.5 w-10">
-                      <input
-                        type="checkbox"
-                        checked={allSelected}
-                        onChange={toggleAll}
-                        className="h-3.5 w-3.5 rounded accent-primary"
-                      />
-                    </th>
-                    <th className="text-left py-2.5">Name</th>
-                    <th className="text-left px-4 py-2.5">Company</th>
-                    <th className="text-left px-4 py-2.5">Stage</th>
-                    <th className="text-left px-4 py-2.5">Source</th>
-                    <th className="text-right px-4 py-2.5">Value</th>
-                    <th className="text-left px-4 py-2.5">Activity</th>
-                    <th className="text-right px-6 py-2.5"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {leads.map((lead) => (
-                    <tr
+            <div className="overflow-hidden rounded-[4px] border border-border/70">
+              <div className="hidden grid-cols-[44px_1.2fr_1fr_0.8fr_0.8fr_0.7fr] gap-4 bg-secondary/45 px-5 py-3 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground lg:grid">
+                <div>
+                  <input
+                    type="checkbox"
+                    checked={allSelected}
+                    onChange={toggleAll}
+                    className="h-4 w-4 rounded accent-primary"
+                  />
+                </div>
+                <div>Lead</div>
+                <div>Stage and company</div>
+                <div>Reminder</div>
+                <div>Last touch</div>
+                <div className="text-right">Value</div>
+              </div>
+
+              <div className="divide-y divide-border/70 bg-white/80">
+                {leads.map((lead) => {
+                  const state = getLeadSlaState(lead);
+
+                  return (
+                    <div
                       key={lead.id}
-                      className={`border-b border-border/30 hover:bg-secondary/20 transition-colors group ${
-                        selected.has(lead.id) ? "bg-primary/5" : ""
-                      }`}
+                      className="grid gap-4 px-4 py-4 lg:grid-cols-[44px_1.2fr_1fr_0.8fr_0.8fr_0.7fr] lg:px-5"
                     >
-                      <td className="px-6 py-3">
+                      <div className="flex items-start pt-1">
                         <input
                           type="checkbox"
                           checked={selected.has(lead.id)}
                           onChange={() => toggleOne(lead.id)}
-                          className="h-3.5 w-3.5 rounded accent-primary"
+                          className="h-4 w-4 rounded accent-primary"
                         />
-                      </td>
-                      <td className="py-3">
-                        <Link
-                          href={`/leads/${lead.id}`}
-                          className="flex items-center gap-2.5"
-                        >
-                          <div className="h-7 w-7 rounded-full bg-primary/8 text-primary flex items-center justify-center text-[9px] font-bold shrink-0">
-                            {getInitials(lead.name)}
-                          </div>
-                          <span className="text-[13px] font-medium hover:text-primary transition-colors">
-                            {lead.name}
-                          </span>
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3 text-[13px] text-muted-foreground/70">
-                        {lead.company || "--"}
-                      </td>
-                      <td className="px-4 py-3">
+                      </div>
+
+                      <a
+                        href={`/leads/${lead.id}`}
+                        onClick={(e) => openLead(lead.id, e)}
+                        className="flex items-center gap-3"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-[3px] bg-primary/10 text-[11px] font-bold text-primary">
+                          {getLeadInitials(lead.name)}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate font-medium">{lead.name}</p>
+                          <p className="truncate text-sm text-muted-foreground">{lead.email || "No email saved"}</p>
+                        </div>
+                      </a>
+
+                      <div className="space-y-2">
                         <select
-                          className="text-[13px] bg-transparent border-none cursor-pointer p-0 text-muted-foreground"
+                          className="h-10 w-full rounded-[3px] border border-input bg-white px-4 text-sm"
                           value={lead.stage_id}
-                          onChange={(e) =>
-                            updateLead.mutate({
-                              id: lead.id,
-                              stage_id: e.target.value,
-                            })
-                          }
+                          onChange={(e) => updateLead.mutate({ id: lead.id, stage_id: e.target.value })}
                         >
-                          {stages?.map((s) => (
-                            <option key={s.id} value={s.id}>
-                              {s.name}
+                          {stages.map((stage) => (
+                            <option key={stage.id} value={stage.id}>
+                              {stage.name}
                             </option>
                           ))}
                         </select>
-                      </td>
-                      <td className="px-4 py-3">
-                        {lead.source ? (
-                          <span className="text-[10px] uppercase tracking-[0.06em] font-semibold text-muted-foreground/50 bg-secondary/80 px-1.5 py-0.5 rounded">
-                            {lead.source}
-                          </span>
-                        ) : (
-                          <span className="text-[13px] text-muted-foreground/40">
-                            --
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-[13px] text-right tabular-nums">
-                        {lead.value ? (
-                          <span className="flex items-center justify-end gap-0.5 text-foreground/80">
-                            <DollarSign className="h-3 w-3 text-muted-foreground/40" />
-                            {Number(lead.value).toLocaleString()}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground/40">--</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-[11px] text-muted-foreground/50 tabular-nums">
-                        <span className="flex items-center gap-1">
-                          <Clock className="h-3 w-3" />
-                          {daysSince(lead.last_activity_at)}
-                        </span>
-                      </td>
-                      <td className="px-6 py-3 text-right">
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          className="opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => {
-                            if (confirm(`Delete "${lead.name}"?`)) {
-                              deleteLead.mutate(lead.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-3.5 w-3.5 text-muted-foreground" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        <p className="text-sm text-muted-foreground">{lead.company || "Independent lead"}</p>
+                      </div>
 
-              {/* Mobile card list */}
-              <div className="md:hidden space-y-2 p-4">
-                {leads.map((lead) => (
-                  <MobileLeadRow
-                    key={lead.id}
-                    lead={lead}
-                    selected={selected.has(lead.id)}
-                    onToggle={() => toggleOne(lead.id)}
-                  />
-                ))}
+                      <div>
+                        <p className={`text-sm font-medium ${state.stale ? "text-stale" : "text-foreground"}`}>
+                          {state.label}
+                        </p>
+                        <p className="text-sm text-muted-foreground">{lead.source || "No source"}</p>
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-medium">{daysSince(lead.last_activity_at)}</p>
+                        <p className="text-sm text-muted-foreground">{lead.reminder_sent_at ? "Reminder sent" : "No reminder yet"}</p>
+                      </div>
+
+                      <div className="text-left lg:text-right">
+                        <p className="font-medium">{formatFullCurrency(lead.value)}</p>
+                        <p className="text-sm text-muted-foreground">{lead.tags?.length ? `${lead.tags.length} tags` : "No tags"}</p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            </>
+            </div>
           )}
         </div>
       </div>
     </>
-  );
-}
-
-function MobileLeadRow({
-  lead,
-  selected,
-  onToggle,
-}: {
-  lead: LeadWithStage;
-  selected: boolean;
-  onToggle: () => void;
-}) {
-  return (
-    <Link href={`/leads/${lead.id}`}>
-      <div
-        className={`bg-card border rounded-lg p-3.5 transition-all ${
-          selected ? "border-primary/40 bg-primary/5" : "border-border/60"
-        }`}
-      >
-        <div className="flex items-start gap-3">
-          <input
-            type="checkbox"
-            checked={selected}
-            onChange={(e) => {
-              e.preventDefault();
-              onToggle();
-            }}
-            onClick={(e) => e.stopPropagation()}
-            className="h-4 w-4 rounded accent-primary mt-0.5 shrink-0"
-          />
-          <div className="min-w-0 flex-1">
-            <p className="text-[13px] font-medium truncate">{lead.name}</p>
-            {lead.company && (
-              <p className="text-[11px] text-muted-foreground/70 truncate">
-                {lead.company}
-              </p>
-            )}
-            <div className="flex items-center gap-3 mt-1.5 text-[11px] text-muted-foreground/50">
-              <span>{lead.stages.name}</span>
-              {lead.value && (
-                <span className="flex items-center gap-0.5">
-                  <DollarSign className="h-3 w-3" />
-                  {Number(lead.value).toLocaleString()}
-                </span>
-              )}
-              <span className="flex items-center gap-0.5">
-                <Clock className="h-3 w-3" />
-                {daysSince(lead.last_activity_at)}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-    </Link>
   );
 }

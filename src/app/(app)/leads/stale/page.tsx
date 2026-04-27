@@ -1,65 +1,68 @@
 "use client";
 
-import Link from "next/link";
+import { AlertCircle, PartyPopper } from "lucide-react";
 import { Header } from "@/components/layout/header";
+import { LeadViewNav } from "@/components/layout/lead-view-nav";
 import { useLeads } from "@/hooks/use-leads";
 import { EmptyState } from "@/components/ui/empty-state";
 import { LeadCard } from "@/components/leads/lead-card";
-import { LayoutGrid, List, AlertCircle, PartyPopper } from "lucide-react";
+import { daysSince, formatFullCurrency } from "@/lib/lead-utils";
 
 export default function StalePage() {
-  const { data: leads, isLoading } = useLeads({ stale: true });
+  const { data: leads = [], isLoading } = useLeads({ stale: true });
+  const totalValue = leads.reduce((sum, lead) => sum + (lead.value ?? 0), 0);
 
   return (
     <>
-      <Header title="Leads" />
-      <div className="flex flex-col h-[calc(100vh-3rem)] sm:h-[calc(100vh-3.5rem)]">
-        {/* Toolbar */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-border/60">
-          <div className="flex items-center gap-1">
-            <Link
-              href="/leads"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] rounded-md text-muted-foreground hover:bg-secondary transition-colors"
-            >
-              <LayoutGrid className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Board</span>
-            </Link>
-            <Link
-              href="/leads/list"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] rounded-md text-muted-foreground hover:bg-secondary transition-colors"
-            >
-              <List className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">List</span>
-            </Link>
-            <Link
-              href="/leads/stale"
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium rounded-md bg-secondary text-foreground"
-            >
-              <AlertCircle className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Stale</span>
-            </Link>
+      <Header
+        eyebrow="Stale"
+        title="A focused catch-up view for overdue leads."
+        subtitle="Everything here has passed its stage SLA. Work from oldest to newest and clear the queue before opening new tabs."
+      />
+
+      <div className="space-y-5 px-4 py-6 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+          <LeadViewNav />
+          <div className="grid gap-3 sm:grid-cols-3">
+            {[
+              { label: "Overdue leads", value: leads.length },
+              { label: "Oldest touch", value: leads[0] ? daysSince(leads[0].last_activity_at) : "--" },
+              { label: "Value at risk", value: formatFullCurrency(totalValue) },
+            ].map((item) => (
+              <div key={item.label} className="rounded-[3px] border border-border/70 bg-white/75 px-4 py-3">
+                <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
+                <p className="mt-2 font-serif text-2xl tracking-[-0.03em]">{item.value}</p>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div className="surface-panel p-4 sm:p-5">
           {isLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <p className="text-muted-foreground text-sm">Loading...</p>
+            <div className="flex min-h-[320px] items-center justify-center">
+              <p className="text-sm text-muted-foreground">Loading stale leads…</p>
             </div>
-          ) : !leads?.length ? (
+          ) : !leads.length ? (
             <EmptyState
-              icon={<PartyPopper className="h-10 w-10" />}
+              icon={<PartyPopper className="h-8 w-8" />}
               title="No stale leads"
-              description="You're all caught up! Every lead is within its follow-up SLA."
+              description="You’re all caught up. Every live opportunity is still within its follow-up window."
             />
           ) : (
-            <div className="space-y-6">
-              <p className="text-sm text-muted-foreground">
-                {leads.length} lead{leads.length === 1 ? "" : "s"} past their
-                follow-up SLA. Oldest first.
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="space-y-5">
+              <div className="rounded-[4px] border border-stale/20 bg-stale/8 px-5 py-4">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="mt-0.5 h-5 w-5 text-stale" />
+                  <div>
+                    <p className="font-medium text-stale">Catch-up mode is on</p>
+                    <p className="mt-1 text-sm leading-6 text-stale/85">
+                      Start with the oldest lead below. Once it has a note, reminder, or stage move, it will leave this view automatically.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
                 {leads.map((lead) => (
                   <LeadCard key={lead.id} lead={lead} />
                 ))}

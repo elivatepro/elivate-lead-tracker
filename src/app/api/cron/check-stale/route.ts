@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { signSnoozeToken } from "@/lib/snooze-token";
 import ReminderEmail, { type StaleLead } from "@/emails/ReminderEmail";
+import { computeStaleLeads } from "@/lib/nov/stale";
 
 export async function GET(req: Request) {
   // Authenticate — only Vercel Cron (or manual calls with the secret) allowed
@@ -17,12 +18,10 @@ export async function GET(req: Request) {
   const resend = new Resend(process.env.RESEND_API_KEY!);
   const appUrl = process.env.NEXT_PUBLIC_APP_URL!;
 
-  // Fetch stale leads from the view
-  const { data: staleLeads, error } = await supabase
-    .from("stale_leads")
-    .select("*");
-
-  if (error) {
+  let staleLeads;
+  try {
+    staleLeads = await computeStaleLeads(supabase, { onlyUnreminded: true });
+  } catch (error) {
     console.error("Failed to fetch stale leads:", error);
     return Response.json({ error: "Failed to fetch stale leads" }, { status: 500 });
   }
@@ -32,7 +31,7 @@ export async function GET(req: Request) {
   }
 
   // Group stale leads by owner_id to batch-fetch emails
-  const ownerIds = [...new Set(staleLeads.map((l) => l.owner_id as string))];
+  const ownerIds = [...new Set(staleLeads.map((l) => l.owner_id))];
 
   // Fetch owner emails from auth.users using admin API
   const ownerEmails: Record<string, string> = {};
@@ -45,18 +44,18 @@ export async function GET(req: Request) {
 
   let sent = 0;
   for (const lead of staleLeads) {
-    const ownerEmail = ownerEmails[lead.owner_id as string];
+    const ownerEmail = ownerEmails[lead.owner_id];
     if (!ownerEmail) continue;
 
     const staleLead: StaleLead = {
-      id: lead.id as string,
-      name: lead.name as string,
-      company: lead.company as string | null,
-      stage_name: lead.stage_name as string,
-      sla_days: lead.sla_days as number,
-      last_activity_at: lead.last_activity_at as string,
-      due_at: lead.due_at as string,
-      notes: lead.notes as string | null,
+      id: lead.id,
+      name: lead.name,
+      company: lead.company,
+      stage_name: lead.stage_name,
+      sla_days: lead.sla_days,
+      last_activity_at: lead.last_activity_at,
+      due_at: lead.due_at,
+      notes: lead.notes,
     };
 
     const snoozeToken = signSnoozeToken(staleLead.id);
@@ -78,7 +77,7 @@ export async function GET(req: Request) {
 
       // Audit log in reminders table
       await supabase.from("reminders").insert({
-        workspace_id: lead.workspace_id as string,
+        workspace_id: lead.workspace_id,
         lead_id: staleLead.id,
         due_at: staleLead.due_at,
         email_id: emailResult?.id ?? null,
@@ -99,7 +98,7 @@ export async function GET(req: Request) {
 
       // Log failure in reminders table
       await supabase.from("reminders").insert({
-        workspace_id: lead.workspace_id as string,
+        workspace_id: lead.workspace_id,
         lead_id: staleLead.id,
         due_at: staleLead.due_at,
         email_id: null,

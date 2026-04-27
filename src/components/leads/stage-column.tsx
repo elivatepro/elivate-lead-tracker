@@ -2,11 +2,17 @@
 
 import { useDroppable } from "@dnd-kit/core";
 import { useDraggable } from "@dnd-kit/core";
-import { LeadCard } from "./lead-card";
+import { LeadCard, type LeadCardDensity } from "./lead-card";
 import type { Stage } from "@/lib/types";
 import type { LeadWithStage } from "@/hooks/use-leads";
 
-function DraggableLeadCard({ lead }: { lead: LeadWithStage }) {
+function DraggableLeadCard({
+  lead,
+  density,
+}: {
+  lead: LeadWithStage;
+  density: LeadCardDensity;
+}) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({ id: lead.id });
 
@@ -24,7 +30,7 @@ function DraggableLeadCard({ lead }: { lead: LeadWithStage }) {
       {...listeners}
       {...attributes}
     >
-      <LeadCard lead={lead} />
+      <LeadCard lead={lead} density={density} />
     </div>
   );
 }
@@ -32,53 +38,51 @@ function DraggableLeadCard({ lead }: { lead: LeadWithStage }) {
 export function StageColumn({
   stage,
   leads,
+  density = "rich",
 }: {
   stage: Stage;
   leads: LeadWithStage[];
+  density?: LeadCardDensity;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
+  const columnWidth =
+    density === "compact" ? "w-[260px]" : density === "comfortable" ? "w-[280px]" : "w-[310px]";
+  const gap = density === "compact" ? "space-y-1.5" : "space-y-2.5";
 
   return (
     <div
       ref={setNodeRef}
-      className={`w-64 sm:w-72 shrink-0 flex flex-col rounded-xl transition-all ${
+      className={`flex ${columnWidth} shrink-0 flex-col rounded-[3px] border p-2.5 transition-colors ${
         isOver
-          ? "bg-primary/5 ring-1 ring-primary/20"
-          : "bg-secondary/30"
+          ? "border-ember/40 bg-ember-tint/30"
+          : "border-line bg-paper-2/40"
       }`}
     >
-      {/* Column header */}
-      <div className="flex items-center justify-between px-3.5 py-3">
+      <div className="flex items-center justify-between border-b border-line/70 px-1 pb-2.5">
         <div className="flex items-center gap-2">
           <div
-            className="h-2 w-2 rounded-full"
-            style={{
-              backgroundColor: stage.color || "#c4960a",
-              boxShadow: `0 0 0 3px ${(stage.color || "#c4960a")}20`,
-            }}
+            className="h-2 w-2 rounded-[1px]"
+            style={{ backgroundColor: stage.color || "#c4960a" }}
           />
-          <span className="text-[13px] font-semibold tracking-tight">
+          <span className="text-[13px] font-semibold tracking-tight text-ink">
             {stage.name}
           </span>
-          <span className="text-[10px] font-medium text-muted-foreground/50 bg-background/80 min-w-[20px] text-center py-0.5 px-1.5 rounded-full">
+          <span className="numeric min-w-[20px] rounded-[2px] bg-paper-2 px-1.5 py-0.5 text-center text-[10px] font-medium text-ink-3">
             {leads.length}
           </span>
         </div>
-        {stage.sla_days && (
-          <span className="text-[10px] text-muted-foreground/40 font-medium">
-            {stage.sla_days}d
-          </span>
-        )}
+        <span className="numeric text-[10.5px] text-ink-4">
+          {stage.is_closed ? "Closed" : stage.sla_days ? `${stage.sla_days}d SLA` : "Open"}
+        </span>
       </div>
 
-      {/* Cards */}
-      <div className="flex-1 overflow-y-auto px-2 pb-2 space-y-1.5">
+      <div className={`mt-2.5 flex-1 ${gap} overflow-y-auto px-0.5 pb-1`}>
         {leads.map((lead) => (
-          <DraggableLeadCard key={lead.id} lead={lead} />
+          <DraggableLeadCard key={lead.id} lead={lead} density={density} />
         ))}
         {leads.length === 0 && (
-          <div className="py-10 text-center">
-            <p className="text-[11px] text-muted-foreground/40">
+          <div className="rounded-[3px] border border-dashed border-line/80 py-10 text-center">
+            <p className="text-[10px] uppercase tracking-[0.18em] text-ink-4/70">
               Drop leads here
             </p>
           </div>

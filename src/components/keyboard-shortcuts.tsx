@@ -3,26 +3,25 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
+// Global keymap. ⌘K is owned by CommandPalette, ⌘J by NovProvider —
+// this component owns the single-letter navigation hotkeys.
 export function KeyboardShortcuts() {
   const router = useRouter();
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      // Don't trigger shortcuts when typing in inputs, textareas, or selects
       const target = e.target as HTMLElement;
-      if (
+      const inField =
         target.tagName === "INPUT" ||
         target.tagName === "TEXTAREA" ||
         target.tagName === "SELECT" ||
-        target.isContentEditable
-      ) {
-        return;
-      }
+        target.isContentEditable;
+
+      if (inField) return;
 
       switch (e.key) {
         case "n": {
           e.preventDefault();
-          // Dispatch custom event for NewLeadDialog to listen to
           window.dispatchEvent(new CustomEvent("open-new-lead-dialog"));
           break;
         }
@@ -31,15 +30,27 @@ export function KeyboardShortcuts() {
           router.push("/leads/stale");
           break;
         }
-        case "/": {
+        case "t": {
           e.preventDefault();
-          // Focus the header search input
-          const headerSearch = document.querySelector<HTMLInputElement>(
-            'header input[placeholder*="Search"]'
+          router.push("/today");
+          break;
+        }
+        case "b": {
+          e.preventDefault();
+          router.push("/leads");
+          break;
+        }
+        case "d": {
+          e.preventDefault();
+          router.push("/");
+          break;
+        }
+        case "/": {
+          // Slash opens the palette as a search-first entry point.
+          e.preventDefault();
+          window.dispatchEvent(
+            new KeyboardEvent("keydown", { key: "k", metaKey: true, bubbles: true })
           );
-          if (headerSearch) {
-            headerSearch.focus();
-          }
           break;
         }
       }

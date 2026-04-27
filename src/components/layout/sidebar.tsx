@@ -3,7 +3,16 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, Settings, LogOut } from "lucide-react";
+import {
+  Inbox,
+  LayoutDashboard,
+  LayoutGrid,
+  Rows3,
+  Triangle,
+  Settings,
+  LogOut,
+  Command,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,8 +23,11 @@ import { signOut } from "@/app/(app)/actions";
 import type { Workspace } from "@/lib/types";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/leads", label: "Leads", icon: Users },
+  { href: "/", label: "Dashboard", icon: LayoutDashboard, note: "Overview" },
+  { href: "/today", label: "Today", icon: Inbox, note: "Triage inbox" },
+  { href: "/leads", label: "Pipeline", icon: LayoutGrid, note: "Board" },
+  { href: "/leads/list", label: "Lead list", icon: Rows3, note: "Bulk edit" },
+  { href: "/leads/stale", label: "Stale", icon: Triangle, note: "Needs attention" },
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
@@ -29,37 +41,37 @@ export function Sidebar({
   const pathname = usePathname();
 
   return (
-    <aside className="w-[232px] border-r border-border bg-gradient-to-b from-card to-card/80 flex flex-col h-full">
-      {/* Logo + branding */}
-      <div className="px-5 pt-6 pb-2">
-        <div className="flex items-center gap-2.5">
-          <Image
-            src="/elivate-logo-icon.svg"
-            alt="Elivate"
-            width={22}
-            height={22}
-          />
-          <span className="text-[17px] font-semibold tracking-tight">
+    <aside className="flex h-full w-[260px] flex-col border-r border-line bg-paper px-3 py-4">
+      {/* brand */}
+      <div className="flex items-center gap-2.5 px-2 pb-4">
+        <Image
+          src="/elivate-logo-icon.svg"
+          alt="Elivate"
+          width={24}
+          height={24}
+        />
+        <div className="min-w-0">
+          <p className="text-[14px] font-semibold leading-none tracking-tight text-ink">
             LeadTracker
-          </span>
+          </p>
+          <p className="font-display text-[11px] italic leading-tight text-ink-4">
+            by Elivate
+          </p>
         </div>
-        <p className="text-[10px] text-muted-foreground pl-[34px] mt-0.5 tracking-wide uppercase">
-          by Elivate
-        </p>
       </div>
 
-      {/* Workspace name */}
-      <div className="px-5 pt-5 pb-3">
-        <p className="text-[10px] font-semibold text-muted-foreground/60 uppercase tracking-[0.12em]">
+      {/* workspace */}
+      <div className="mb-4 border-y border-line/70 px-2 py-3">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-4">
           Workspace
         </p>
-        <p className="text-sm font-semibold text-foreground/80 mt-1 truncate">
+        <p className="mt-1 truncate font-display text-[18px] leading-tight tracking-[-0.01em] text-ink">
           {workspace.name}
         </p>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 px-3 mt-1 space-y-0.5">
+      {/* nav */}
+      <nav className="flex-1 space-y-px">
         {navItems.map((item) => {
           const isActive =
             item.href === "/"
@@ -70,42 +82,81 @@ export function Sidebar({
             <Link
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium transition-all ${
+              className={`flex items-center gap-2.5 rounded-[3px] px-2.5 py-2 text-[13px] transition-colors ${
                 isActive
-                  ? "bg-primary/8 text-primary shadow-[inset_3px_0_0_0] shadow-primary"
-                  : "text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
+                  ? "bg-ink text-paper"
+                  : "text-ink-3 hover:bg-paper-2 hover:text-ink"
               }`}
             >
               <item.icon
-                className={`h-[18px] w-[18px] ${isActive ? "text-primary" : ""}`}
-                strokeWidth={isActive ? 2 : 1.5}
+                className="h-[15px] w-[15px] shrink-0"
+                strokeWidth={isActive ? 2 : 1.7}
               />
-              {item.label}
+              <span className="min-w-0 flex-1">
+                <span className="block truncate font-medium leading-tight">{item.label}</span>
+                {item.note ? (
+                  <span
+                    className={`block truncate text-[10.5px] leading-tight ${
+                      isActive ? "text-paper/55" : "text-ink-4/85"
+                    }`}
+                  >
+                    {item.note}
+                  </span>
+                ) : null}
+              </span>
             </Link>
           );
         })}
       </nav>
 
-      {/* User section */}
-      <div className="p-3 border-t border-border/60">
-        <DropdownMenu>
-          <DropdownMenuTrigger className="w-full flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-muted-foreground hover:bg-secondary/80 hover:text-foreground transition-all">
-            <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary/15 to-primary/5 text-primary flex items-center justify-center text-[11px] font-bold ring-1 ring-primary/10">
-              {userEmail[0].toUpperCase()}
-            </div>
-            <span className="truncate text-left flex-1">{userEmail}</span>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-56">
-            <DropdownMenuItem
-              onClick={() => signOut()}
-              className="text-destructive focus:text-destructive"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      {/* shortcuts */}
+      <div className="mb-3 border-y border-line/70 px-2 py-3">
+        <div className="flex items-center justify-between text-[10px] uppercase tracking-[0.18em] text-ink-4">
+          <span>Shortcuts</span>
+          <Command className="h-3 w-3" />
+        </div>
+        <div className="mt-2.5 space-y-1.5 text-[12px] text-ink-2">
+          <ShortcutRow label="Command palette" keys={["⌘", "K"]} />
+          <ShortcutRow label="Ask Nov" keys={["⌘", "J"]} />
+          <ShortcutRow label="New lead" keys={["N"]} />
+          <ShortcutRow label="Today" keys={["T"]} />
+        </div>
       </div>
+
+      {/* user */}
+      <DropdownMenu>
+        <DropdownMenuTrigger className="flex w-full items-center gap-2.5 rounded-[3px] border border-line bg-card px-2.5 py-2 text-left text-[13px] transition-colors hover:bg-paper-2">
+          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-[3px] bg-ember-tint text-[10px] font-bold text-ember">
+            {userEmail[0].toUpperCase()}
+          </div>
+          <div className="min-w-0 flex-1">
+            <span className="block truncate font-medium leading-tight text-ink">{userEmail}</span>
+            <span className="block text-[10.5px] leading-tight text-ink-4">Owner</span>
+          </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-52">
+          <DropdownMenuItem
+            onClick={() => signOut()}
+            className="text-destructive focus:text-destructive"
+          >
+            <LogOut className="h-3.5 w-3.5 mr-2" />
+            Sign out
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </aside>
+  );
+}
+
+function ShortcutRow({ label, keys }: { label: string; keys: string[] }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span>{label}</span>
+      <span className="flex items-center gap-1">
+        {keys.map((k) => (
+          <kbd key={k}>{k}</kbd>
+        ))}
+      </span>
+    </div>
   );
 }
