@@ -1,0 +1,16 @@
+name: Process email queue
+
+on:
+  schedule:
+    - cron: "0 * * * *"
+  workflow_dispatch:
+
+jobs:
+  process:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger email queue processor
+        run: |
+          curl -fsS -o /dev/null \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            "https://leadtracker.elivate.io/api/cron/process-email-queue"
