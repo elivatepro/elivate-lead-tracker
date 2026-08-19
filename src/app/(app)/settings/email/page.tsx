@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Mail } from "lucide-react";
+import { Mail, Send } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -22,6 +22,7 @@ type EmailSettings = {
 
 export default function EmailSettingsPage() {
   const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
   const [host, setHost] = useState("");
   const [port, setPort] = useState("587");
   const [user, setUser] = useState("");
@@ -67,15 +68,42 @@ export default function EmailSettingsPage() {
       body: JSON.stringify(payload),
     });
 
-    if (res.ok) {
+if (res.ok) {
       setPassword("");
       setHasPassword(Boolean(user) || Boolean(password));
       toast.success("Email settings saved");
     } else {
       const data = (await res.json().catch(() => null)) as { error?: string } | null;
-      toast.error(data?.error ?? "Couldn’t save settings");
+      toast.error(data?.error ?? "Couldn't save settings");
     }
     setSaving(false);
+  }
+
+  async function handleTest() {
+    setTesting(true);
+    const payload: Record<string, unknown> = {
+      smtp_host: host,
+      smtp_port: Number(port),
+      smtp_user: user,
+      email_from_name: fromName,
+    };
+    if (password) payload.smtp_password = password;
+
+    const res = await fetch("/api/email-settings/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = (await res.json().catch(() => null)) as
+      | { ok?: boolean; error?: string }
+      | null;
+
+    if (data?.ok) {
+      toast.success("Test email sent — check your inbox");
+    } else {
+      toast.error(data?.error ?? "Couldn't send test email");
+    }
+    setTesting(false);
   }
 
   return (
@@ -193,8 +221,17 @@ export default function EmailSettingsPage() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
-        <Button onClick={handleSave} disabled={saving} className="rounded-[3px]">
+      <div className="flex justify-end gap-2">
+        <Button
+          variant="outline"
+          onClick={handleTest}
+          disabled={saving || testing}
+          className="rounded-[3px]"
+        >
+          <Send className="h-4 w-4" />
+          {testing ? "Testing…" : "Test settings"}
+        </Button>
+        <Button onClick={handleSave} disabled={saving || testing} className="rounded-[3px]">
           <Mail className="h-4 w-4" />
           {saving ? "Saving…" : "Save settings"}
         </Button>

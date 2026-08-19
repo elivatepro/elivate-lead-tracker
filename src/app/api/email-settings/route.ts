@@ -48,7 +48,15 @@ export async function PUT(req: Request) {
   }
   if ("smtp_user" in body) updates.smtp_user = body.smtp_user || null;
   if ("smtp_password" in body && typeof body.smtp_password === "string" && body.smtp_password) {
-    updates.smtp_pass_encrypted = encryptSecret(body.smtp_password);
+    try {
+      updates.smtp_pass_encrypted = encryptSecret(body.smtp_password);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Encryption failed";
+      return NextResponse.json(
+        { error: `Couldn't encrypt password: ${message}` },
+        { status: 500 }
+      );
+    }
   }
   if ("email_from_name" in body) updates.email_from_name = body.email_from_name || null;
   if ("email_signature" in body) updates.email_signature = body.email_signature || null;
