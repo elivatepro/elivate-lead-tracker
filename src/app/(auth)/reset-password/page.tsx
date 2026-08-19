@@ -50,7 +50,7 @@ export default function ResetPasswordPage() {
   }
 
   return (
-    <Card className="rounded-[4px] border-border/70 bg-white/85">
+    <Card className="rounded-[4px] border-border/70 bg-card/85">
       <CardHeader className="space-y-3">
         <CardTitle className="font-serif text-4xl tracking-[-0.04em]">Choose a new password</CardTitle>
         <CardDescription className="text-sm leading-6">

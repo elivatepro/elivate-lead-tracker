@@ -1,6 +1,12 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  useQuery,
+  useMutation,
+  useQueryClient,
+  keepPreviousData,
+  type QueryKey,
+} from "@tanstack/react-query";
 
 export type LeadWithStage = {
   id: string;
@@ -18,6 +24,7 @@ export type LeadWithStage = {
   snoozed_until: string | null;
   reminder_sent_at: string | null;
   closed_at: string | null;
+  archived_at: string | null;
   created_at: string;
   updated_at: string;
   stages: {
@@ -29,11 +36,21 @@ export type LeadWithStage = {
   };
 };
 
-export function useLeads(filters?: { stage?: string; stale?: boolean; search?: string }) {
+type OptimisticContext = {
+  previous: [QueryKey, LeadWithStage[] | undefined][];
+};
+
+export function useLeads(filters?: {
+  stage?: string;
+  stale?: boolean;
+  search?: string;
+  archived?: boolean;
+}) {
   const params = new URLSearchParams();
   if (filters?.stage) params.set("stage", filters.stage);
   if (filters?.stale) params.set("stale", "true");
   if (filters?.search) params.set("search", filters.search);
+  if (filters?.archived) params.set("archived", "true");
 
   return useQuery<LeadWithStage[]>({
     queryKey: ["leads", filters],
@@ -42,7 +59,22 @@ export function useLeads(filters?: { stage?: string; stale?: boolean; search?: s
       if (!res.ok) throw new Error("Failed to fetch leads");
       return res.json();
     },
+    placeholderData: keepPreviousData,
   });
+}
+
+function snapshotLeadLists(queryClient: ReturnType<typeof useQueryClient>) {
+  const previous = queryClient.getQueriesData<LeadWithStage[]>({
+    queryKey: ["leads"],
+  }) as [QueryKey, LeadWithStage[] | undefined][];
+  return { previous };
+}
+
+function restoreLeadLists(queryClient: ReturnType<typeof useQueryClient>, ctx?: OptimisticContext) {
+  if (!ctx) return;
+  for (const [key, data] of ctx.previous) {
+    queryClient.setQueryData(key, data);
+  }
 }
 
 export function useCreateLead() {
@@ -94,8 +126,23 @@ export function useUpdateLead() {
       }
       return res.json();
     },
+    onMutate: async ({ id, ...updates }): Promise<OptimisticContext> => {
+      await queryClient.cancelQueries({ queryKey: ["leads"] });
+      const ctx = snapshotLeadLists(queryClient);
+      const patch = updates as Partial<LeadWithStage>;
+
+      queryClient.setQueriesData<LeadWithStage[]>({ queryKey: ["leads"] }, (old) =>
+        old?.map((lead) => (lead.id === id ? { ...lead, ...patch } : lead))
+      );
+      queryClient.setQueryData<Record<string, unknown>>(["lead", id], (old) =>
+        old ? { ...old, ...patch } : old
+      );
+      return ctx;
+    },
+    onError: (_error, _vars, ctx) => restoreLeadLists(queryClient, ctx),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
+      queryClient.invalidateQueries({ queryKey: ["lead"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });
     },
   });
@@ -113,6 +160,16 @@ export function useDeleteLead() {
       }
       return res.json();
     },
+    onMutate: async (id): Promise<OptimisticContext> => {
+      await queryClient.cancelQueries({ queryKey: ["leads"] });
+      const ctx = snapshotLeadLists(queryClient);
+
+      queryClient.setQueriesData<LeadWithStage[]>({ queryKey: ["leads"] }, (old) =>
+        old?.filter((lead) => lead.id !== id)
+      );
+      return ctx;
+    },
+    onError: (_error, _vars, ctx) => restoreLeadLists(queryClient, ctx),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leads"] });
       queryClient.invalidateQueries({ queryKey: ["dashboard"] });

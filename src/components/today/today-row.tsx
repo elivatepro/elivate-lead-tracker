@@ -76,7 +76,7 @@ export function TodayRow({ lead }: TodayRowProps) {
   return (
     <article
       className={`group relative flex flex-col gap-3 border-b border-line/60 px-4 py-4 transition-colors last:border-b-0 hover:bg-paper-2/40 sm:flex-row sm:items-center sm:gap-5 sm:px-5 sm:py-5 ${
-        sla.stale ? "bg-[linear-gradient(90deg,rgba(185,79,46,0.04),transparent_60%)]" : ""
+        sla.stale ? "bg-gradient-to-r from-stale/5 to-transparent" : ""
       }`}
     >
       {/* status rail */}

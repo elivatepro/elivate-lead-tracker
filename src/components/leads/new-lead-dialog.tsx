@@ -15,6 +15,13 @@ import {
 } from "@/components/ui/dialog";
 import { useCreateLead } from "@/hooks/use-leads";
 import { useStages } from "@/hooks/use-stages";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Plus } from "lucide-react";
 
 type NewLeadForm = {
@@ -30,10 +37,11 @@ type NewLeadForm = {
 
 export function NewLeadDialog() {
   const [open, setOpen] = useState(false);
+  const [stageId, setStageId] = useState<string | null>(null);
   const { data: stages } = useStages();
   const createLead = useCreateLead();
 
-  const { register, handleSubmit, reset, setValue } = useForm<NewLeadForm>({
+  const { register, handleSubmit, reset } = useForm<NewLeadForm>({
     defaultValues: {
       stage_id: "",
     },
@@ -52,9 +60,9 @@ export function NewLeadDialog() {
     const stageId = data.stage_id || stages?.find((s) => !s.is_closed)?.id;
     if (!stageId) return;
 
-    await createLead.mutateAsync({
+await createLead.mutateAsync({
       name: data.name,
-      stage_id: stageId,
+      stage_id: stageId || defaultStage?.id || "",
       company: data.company || undefined,
       email: data.email || undefined,
       phone: data.phone || undefined,
@@ -64,6 +72,7 @@ export function NewLeadDialog() {
     });
 
     reset();
+    setStageId(null);
     setOpen(false);
   }
 
@@ -72,7 +81,7 @@ export function NewLeadDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger className="inline-flex shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm hover:bg-primary/90 hover:shadow-md h-9 gap-1.5 px-2.5 sm:px-4 text-[13px] font-medium transition-all">
+      <DialogTrigger className="inline-flex shrink-0 items-center justify-center rounded-[3px] bg-primary text-primary-foreground h-9 gap-1.5 px-2.5 sm:px-4 text-[13px] font-medium transition-all">
         <Plus className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">New lead</span>
       </DialogTrigger>
@@ -149,22 +158,24 @@ export function NewLeadDialog() {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="stage">Stage</Label>
-            <select
-              id="stage"
-              className="h-10 w-full rounded-lg border border-input bg-white px-3 py-2 text-sm"
-              defaultValue={defaultStage?.id}
-              {...register("stage_id")}
-              onChange={(e) => setValue("stage_id", e.target.value)}
+            <Label>Stage</Label>
+            <Select
+              value={stageId ?? defaultStage?.id ?? null}
+              onValueChange={(value) => setStageId(value)}
             >
-              {stages
-                ?.filter((s) => !s.is_closed)
-                .map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-            </select>
+              <SelectTrigger className="h-10 w-full rounded-[3px] bg-card px-3">
+                <SelectValue placeholder="Select a stage" />
+              </SelectTrigger>
+              <SelectContent className="w-full" align="start">
+                {stages
+                  ?.filter((s) => !s.is_closed)
+                  .map((s) => (
+                    <SelectItem key={s.id} value={s.id}>
+                      {s.name}
+                    </SelectItem>
+                  ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="space-y-2">

@@ -1,8 +1,8 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowUpRight, Clock3, Sparkles, Triangle } from "lucide-react";
+import { ArrowUpRight, Sparkles, Triangle } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { NewLeadDialog } from "@/components/leads/new-lead-dialog";
 import { ImportLeadsDialog } from "@/components/leads/import-leads-dialog";
@@ -15,15 +15,19 @@ const DAY_MS = 86_400_000;
 type Bucket = {
   key: "overdue" | "due-soon" | "fresh";
   title: string;
-  hint: string;
   leads: LeadWithStage[];
 };
 
 export default function TodayPage() {
   const { data: leads = [], isLoading } = useLeads();
+  const [now, setNow] = useState(() => Date.now());
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
 
   const buckets = useMemo<Bucket[]>(() => {
-    const now = Date.now();
     const overdue: LeadWithStage[] = [];
     const dueSoon: LeadWithStage[] = [];
     const fresh: LeadWithStage[] = [];
@@ -68,23 +72,20 @@ export default function TodayPage() {
       {
         key: "overdue",
         title: "Overdue",
-        hint: "Past their follow-up window. Touch first, snooze if you can't get to them today.",
         leads: overdue,
       },
       {
         key: "due-soon",
         title: "Due soon",
-        hint: "Coming due in the next 48 hours.",
         leads: dueSoon,
       },
       {
         key: "fresh",
         title: "Recently added",
-        hint: "New leads from the last few days. Send the first warm touch.",
         leads: fresh.slice(0, 8),
       },
     ];
-  }, [leads]);
+  }, [leads, now]);
 
   const total = buckets.reduce((sum, b) => sum + b.leads.length, 0);
   const overdueCount = buckets[0].leads.length;
@@ -92,9 +93,7 @@ export default function TodayPage() {
   return (
     <>
       <Header
-        eyebrow="Today"
-        title="A calm desk for the day's follow-ups."
-        subtitle="Triage overdue conversations, keep momentum on what's due soon, and welcome the fresh ones — without leaving this view."
+        title="Today"
         actions={
           <div className="flex items-center gap-2">
             <ImportLeadsDialog />
@@ -106,21 +105,18 @@ export default function TodayPage() {
       <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <section className="grid gap-3 sm:grid-cols-3">
           <SummaryTile
-            label="In focus today"
+            label="In focus"
             value={total}
-            description={total === 0 ? "Nothing pending" : "Across all sections"}
             tone="neutral"
           />
           <SummaryTile
             label="Overdue"
             value={overdueCount}
-            description={overdueCount === 0 ? "All caught up" : "Past their SLA"}
             tone={overdueCount === 0 ? "neutral" : "danger"}
           />
           <SummaryTile
             label="Due soon"
             value={buckets[1].leads.length}
-            description="Next 48 hours"
             tone="warm"
           />
         </section>
@@ -156,16 +152,13 @@ function TodaySection({ bucket }: { bucket: Bucket }) {
           : "border-line shadow-[0_8px_30px_rgba(38,28,18,0.04)]"
       }`}
     >
-      <header className="flex items-baseline justify-between gap-4 border-b border-line/70 bg-paper-2/40 px-5 py-3.5">
+      <header className="flex items-center justify-between gap-4 border-b border-line/70 bg-paper-2/40 px-5 py-3">
         <div className="flex items-baseline gap-3">
           <h2 className="font-display text-[20px] tracking-[-0.01em] text-ink">{bucket.title}</h2>
-          <span className="numeric rounded-[2px] border border-line bg-white px-1.5 py-px text-[11px] font-medium text-ink-3">
+          <span className="numeric rounded-[2px] border border-line bg-card px-1.5 py-px text-[11px] font-medium text-ink-3">
             {bucket.leads.length}
           </span>
         </div>
-        <p className="hidden max-w-md text-right text-[12.5px] leading-5 text-ink-4 sm:block">
-          {bucket.hint}
-        </p>
       </header>
 
       <div>
@@ -180,12 +173,10 @@ function TodaySection({ bucket }: { bucket: Bucket }) {
 function SummaryTile({
   label,
   value,
-  description,
   tone,
 }: {
   label: string;
   value: number;
-  description: string;
   tone: "neutral" | "warm" | "danger";
 }) {
   const accent =
@@ -203,28 +194,20 @@ function SummaryTile({
       <p className={`numeric mt-2 font-display text-[36px] leading-none tracking-[-0.03em] ${valueClass}`}>
         {value}
       </p>
-      <p className="mt-2 text-[12px] text-ink-4">{description}</p>
     </div>
   );
 }
 
 function EmptyDesk({ hasAnyLeads }: { hasAnyLeads: boolean }) {
   return (
-    <div className="surface-panel flex flex-col items-center gap-4 px-6 py-14 text-center">
+    <div className="surface-panel flex flex-col items-center gap-5 px-6 py-14 text-center">
       <div className="flex h-10 w-10 items-center justify-center rounded-[3px] bg-ember-tint text-ember">
         <Sparkles className="h-4 w-4" />
       </div>
-      <div className="max-w-md space-y-2">
-        <h2 className="font-display text-[22px] tracking-[-0.01em] text-ink">
-          {hasAnyLeads ? "The desk is clear." : "Add your first lead."}
-        </h2>
-        <p className="text-[13.5px] leading-6 text-ink-4">
-          {hasAnyLeads
-            ? "Nothing's overdue, nothing's due in the next two days. A good moment to plan, draft, or take a breath."
-            : "Capture a name and a stage, and your follow-up timing kicks in. Today is where it'll show up first."}
-        </p>
-      </div>
-      <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+      <h2 className="font-display text-[22px] tracking-[-0.01em] text-ink">
+        {hasAnyLeads ? "The desk is clear." : "Add your first lead."}
+      </h2>
+      <div className="flex flex-wrap items-center justify-center gap-2">
         <Link
           href="/leads"
           className="inline-flex items-center gap-1.5 rounded-[3px] border border-line bg-card px-3 py-1.5 text-[12.5px] font-medium text-ink hover:border-line-3"
@@ -235,10 +218,10 @@ function EmptyDesk({ hasAnyLeads }: { hasAnyLeads: boolean }) {
           href="/leads/stale"
           className="inline-flex items-center gap-1.5 rounded-[3px] border border-line bg-card px-3 py-1.5 text-[12.5px] font-medium text-ink hover:border-line-3"
         >
-          <Triangle className="h-3.5 w-3.5" /> Stale view
+          <Triangle className="h-3.5 w-3.5" /> Stale
         </Link>
         <span className="inline-flex items-center gap-1.5 rounded-[3px] border border-line bg-paper-2/60 px-3 py-1.5 text-[12px] text-ink-4">
-          <Clock3 className="h-3.5 w-3.5" /> Press <kbd>⌘K</kbd> for the command palette
+          <kbd>⌘K</kbd> command palette
         </span>
       </div>
     </div>

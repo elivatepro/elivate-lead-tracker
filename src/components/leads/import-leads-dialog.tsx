@@ -13,6 +13,13 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { Upload, FileSpreadsheet, X, AlertTriangle } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import * as XLSX from "xlsx";
 
 const LEAD_FIELDS: readonly { key: string; label: string; required?: boolean }[] = [
@@ -152,7 +159,7 @@ export function ImportLeadsDialog() {
         if (!v) reset();
       }}
     >
-      <DialogTrigger className="inline-flex shrink-0 items-center justify-center rounded-lg border border-border bg-white text-foreground shadow-sm hover:bg-secondary h-9 gap-1.5 px-2.5 sm:px-4 text-[13px] font-medium transition-all">
+      <DialogTrigger className="inline-flex shrink-0 items-center justify-center rounded-lg border border-border bg-card text-foreground shadow-sm hover:bg-secondary h-9 gap-1.5 px-2.5 sm:px-4 text-[13px] font-medium transition-all">
         <Upload className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">Import</span>
       </DialogTrigger>
@@ -223,23 +230,27 @@ export function ImportLeadsDialog() {
                         <span className="text-destructive ml-0.5">*</span>
                       )}
                     </span>
-                    <select
-                      className="h-9 w-full rounded-lg border border-input bg-white px-3 text-sm"
-                      value={mapping[field.key] || ""}
-                      onChange={(e) =>
+                    <Select
+                      value={mapping[field.key] || null}
+                      onValueChange={(value) =>
                         setMapping((prev) => ({
                           ...prev,
-                          [field.key]: e.target.value,
+                          [field.key]: value ?? "",
                         }))
                       }
                     >
-                      <option value="">— skip —</option>
-                      {headers.map((h) => (
-                        <option key={h} value={h}>
-                          {h}
-                        </option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="h-9 w-full rounded-[3px] bg-card px-3">
+                        <SelectValue placeholder="— skip —" />
+                      </SelectTrigger>
+                      <SelectContent className="w-full" align="start">
+                        <SelectItem value="">— skip —</SelectItem>
+                        {headers.map((h) => (
+                          <SelectItem key={h} value={h}>
+                            {h}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 ))}
               </div>

@@ -33,7 +33,7 @@ export default async function AppLayout({
       <Suspense fallback={null}>
         <div className="flex h-screen bg-paper">
           <div className="hidden lg:block">
-            <Sidebar workspace={workspace} userEmail={user.email ?? ""} />
+            <Sidebar userEmail={user.email ?? ""} />
           </div>
 
           <div className="flex min-w-0 flex-1 overflow-hidden">

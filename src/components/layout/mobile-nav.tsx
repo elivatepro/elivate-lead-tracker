@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { signOut } from "@/app/(app)/actions";
 import type { Workspace } from "@/lib/types";
+import { ThemeToggle } from "@/components/layout/theme-toggle";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -55,7 +56,7 @@ export function MobileNav({
   return (
     <>
       {/* Mobile header bar */}
-      <div className="relative z-40 flex h-16 items-center justify-between border-b border-border/60 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(252,246,238,0.95))] px-4 lg:hidden">
+      <div className="relative z-40 flex h-16 items-center justify-between border-b border-border/60 bg-card/80 px-4 backdrop-blur-sm lg:hidden">
         <div className="flex items-center gap-2.5 px-1">
           <Image
             src="/elivate-logo-icon.svg"
@@ -92,7 +93,7 @@ export function MobileNav({
       >
         {/* Backdrop */}
         <div
-          className={`absolute inset-0 bg-foreground/30 transition-opacity duration-300 ${
+          className={`absolute inset-0 bg-black/40 transition-opacity duration-300 ${
             open ? "opacity-100" : "opacity-0"
           }`}
           onClick={() => setOpen(false)}
@@ -101,7 +102,7 @@ export function MobileNav({
         {/* Drawer panel */}
         <div
           id="mobile-nav-drawer"
-          className={`absolute inset-y-0 left-0 flex w-[min(320px,calc(100vw-1rem))] max-w-[88vw] flex-col overflow-y-auto border-r border-line/70 bg-[linear-gradient(180deg,rgba(255,252,246,1),rgba(244,235,223,0.98))] shadow-2xl transition-transform duration-300 ease-out ${
+          className={`absolute inset-y-0 left-0 flex w-[min(320px,calc(100vw-1rem))] max-w-[88vw] flex-col overflow-y-auto border-r border-line/70 bg-card shadow-2xl transition-transform duration-300 ease-out ${
             open ? "translate-x-0" : "-translate-x-full"
           }`}
           role="dialog"
@@ -126,6 +127,7 @@ export function MobileNav({
                   </p>
                 </div>
               </div>
+              <ThemeToggle />
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -137,15 +139,9 @@ export function MobileNav({
             </div>
           </div>
 
-          <div className="px-5 pb-3 pt-5">
-            <p className="text-[10px] font-medium uppercase tracking-[0.12em] text-muted-foreground/50">
-              Workspace
-            </p>
-            <p className="mt-1 font-serif text-[24px] tracking-[-0.03em] text-foreground">
+          <div className="px-5 pb-3 pt-4">
+            <p className="font-display text-[24px] tracking-[-0.03em] text-foreground">
               {workspace.name}
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Follow-up timing, pipeline clarity, and one calm place to work.
             </p>
           </div>
 
@@ -186,7 +182,7 @@ export function MobileNav({
                 <span className="block truncate text-[13px] font-medium text-foreground">
                   {userEmail}
                 </span>
-                <span className="text-xs text-muted-foreground">Owner account</span>
+                <span className="text-xs text-muted-foreground">Owner</span>
               </div>
             </div>
             <button

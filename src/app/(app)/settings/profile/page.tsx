@@ -53,7 +53,7 @@ export default function ProfileSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-[4px] border-border/70 bg-white/80">
+      <Card className="rounded-[4px] border-border/70 bg-card/80">
         <CardHeader>
           <p className="eyebrow-label">Profile</p>
           <CardTitle className="mt-2 font-serif text-3xl tracking-[-0.04em]">
@@ -64,14 +64,11 @@ export default function ProfileSettingsPage() {
           <div className="space-y-2">
             <Label>Email</Label>
             <Input value={profile?.email ?? ""} disabled className="h-11 rounded-[3px]" />
-            <p className="text-sm text-muted-foreground">
-              Your account email is managed through authentication and can’t be edited from this screen.
-            </p>
           </div>
         </CardContent>
       </Card>
 
-      <Card className="rounded-[4px] border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,241,231,0.94))]">
+      <Card className="rounded-[4px] border-border/70 bg-card">
         <CardHeader>
           <p className="eyebrow-label">Security</p>
           <CardTitle className="mt-2 font-serif text-3xl tracking-[-0.04em]">

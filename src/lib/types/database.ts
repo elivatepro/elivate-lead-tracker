@@ -24,6 +24,14 @@ export type Database = {
           nov_be_concise: boolean;
           nov_avoid_pushy_language: boolean;
           nov_include_booking_prompt: boolean;
+          smtp_host: string | null;
+          smtp_port: number;
+          smtp_user: string | null;
+          smtp_pass_encrypted: string | null;
+          email_from_name: string | null;
+          email_signature: string | null;
+          email_batch_size: number;
+          email_batch_delay: number;
           created_at: string;
           updated_at: string;
         };
@@ -41,6 +49,14 @@ export type Database = {
           nov_be_concise?: boolean;
           nov_avoid_pushy_language?: boolean;
           nov_include_booking_prompt?: boolean;
+          smtp_host?: string | null;
+          smtp_port?: number;
+          smtp_user?: string | null;
+          smtp_pass_encrypted?: string | null;
+          email_from_name?: string | null;
+          email_signature?: string | null;
+          email_batch_size?: number;
+          email_batch_delay?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -58,6 +74,14 @@ export type Database = {
           nov_be_concise?: boolean;
           nov_avoid_pushy_language?: boolean;
           nov_include_booking_prompt?: boolean;
+          smtp_host?: string | null;
+          smtp_port?: number;
+          smtp_user?: string | null;
+          smtp_pass_encrypted?: string | null;
+          email_from_name?: string | null;
+          email_signature?: string | null;
+          email_batch_size?: number;
+          email_batch_delay?: number;
           created_at?: string;
           updated_at?: string;
         };
@@ -111,6 +135,7 @@ export type Database = {
           snoozed_until: string | null;
           reminder_sent_at: string | null;
           closed_at: string | null;
+          archived_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -149,8 +174,88 @@ export type Database = {
           snoozed_until?: string | null;
           reminder_sent_at?: string | null;
           closed_at?: string | null;
+          archived_at?: string | null;
           created_at?: string;
           updated_at?: string;
+        };
+      };
+      email_queue: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          lead_id: string;
+          from_email: string;
+          from_name: string | null;
+          to_email: string;
+          subject: string;
+          body_html: string | null;
+          scheduled_for: string;
+          status: string;
+          error: string | null;
+          sent_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          lead_id: string;
+          from_email: string;
+          from_name?: string | null;
+          to_email: string;
+          subject: string;
+          body_html?: string | null;
+          scheduled_for?: string;
+          status?: string;
+          error?: string | null;
+          sent_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          lead_id?: string;
+          from_email?: string;
+          from_name?: string | null;
+          to_email?: string;
+          subject?: string;
+          body_html?: string | null;
+          scheduled_for?: string;
+          status?: string;
+          error?: string | null;
+          sent_at?: string | null;
+          created_at?: string;
+        };
+      };
+      email_log: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          lead_id: string;
+          to_email: string;
+          subject: string;
+          status: string;
+          error: string | null;
+          sent_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          lead_id: string;
+          to_email: string;
+          subject: string;
+          status?: string;
+          error?: string | null;
+          sent_at?: string;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          lead_id?: string;
+          to_email?: string;
+          subject?: string;
+          status?: string;
+          error?: string | null;
+          sent_at?: string;
         };
       };
       activities: {
@@ -158,7 +263,7 @@ export type Database = {
           id: string;
           workspace_id: string;
           lead_id: string;
-          type: "created" | "stage_changed" | "field_edited" | "note_added" | "reminder_sent" | "snoozed" | "closed";
+          type: "created" | "stage_changed" | "field_edited" | "note_added" | "reminder_sent" | "snoozed" | "closed" | "email_sent" | "archived" | "restored";
           payload: Json | null;
           actor_id: string | null;
           created_at: string;
@@ -167,7 +272,7 @@ export type Database = {
           id?: string;
           workspace_id: string;
           lead_id: string;
-          type: "created" | "stage_changed" | "field_edited" | "note_added" | "reminder_sent" | "snoozed" | "closed";
+          type: "created" | "stage_changed" | "field_edited" | "note_added" | "reminder_sent" | "snoozed" | "closed" | "email_sent" | "archived" | "restored";
           payload?: Json | null;
           actor_id?: string | null;
           created_at?: string;
@@ -241,7 +346,17 @@ export type Database = {
     };
     Functions: Record<string, never>;
     Enums: {
-      activity_type: "created" | "stage_changed" | "field_edited" | "note_added" | "reminder_sent" | "snoozed" | "closed";
+      activity_type:
+        | "created"
+        | "stage_changed"
+        | "field_edited"
+        | "note_added"
+        | "reminder_sent"
+        | "snoozed"
+        | "closed"
+        | "email_sent"
+        | "archived"
+        | "restored";
     };
   };
 };

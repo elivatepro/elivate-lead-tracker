@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -35,15 +35,13 @@ export default function BoardPage() {
   const { data: stages = [], isLoading: stagesLoading } = useStages();
   const updateLead = useUpdateLead();
   const [activeId, setActiveId] = useState<string | null>(null);
-  const [density, setDensity] = useState<LeadCardDensity>("rich");
-
-  // Hydrate density from localStorage on mount.
-  useEffect(() => {
+  const [density, setDensity] = useState<LeadCardDensity>(() => {
+    if (typeof window === "undefined") return "rich";
     const saved = window.localStorage.getItem(DENSITY_KEY);
-    if (saved === "compact" || saved === "comfortable" || saved === "rich") {
-      setDensity(saved);
-    }
-  }, []);
+    return saved === "compact" || saved === "comfortable" || saved === "rich"
+      ? saved
+      : "rich";
+  });
 
   function handleDensity(next: LeadCardDensity) {
     setDensity(next);
@@ -89,9 +87,7 @@ export default function BoardPage() {
   return (
     <>
       <Header
-        eyebrow="Pipeline"
-        title="A board you can read at a glance."
-        subtitle="Drag leads stage to stage, keep the reminder state visible on every card, and switch density to match the depth you need right now."
+        title="Pipeline"
         actions={
           <div className="flex items-center gap-2">
             <ImportLeadsDialog />
@@ -115,7 +111,7 @@ export default function BoardPage() {
                     onClick={() => handleDensity(option.key)}
                     className={`rounded-[2px] px-2 py-1 text-[11px] font-medium transition-colors ${
                       density === option.key
-                        ? "bg-white text-ink shadow-sm"
+                        ? "bg-card text-ink shadow-sm"
                         : "text-ink-4 hover:text-ink"
                     }`}
                   >

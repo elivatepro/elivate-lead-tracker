@@ -46,7 +46,7 @@ function SortableStageRow({
         transition,
         opacity: isDragging ? 0.5 : 1,
       }}
-      className="grid gap-3 rounded-[3px] border border-border/70 bg-white/75 px-4 py-4 md:grid-cols-[auto_1fr_110px_90px_auto]"
+      className="grid gap-3 rounded-[3px] border border-border/70 bg-card/75 px-4 py-4 md:grid-cols-[auto_1fr_110px_90px_auto]"
     >
       <button {...attributes} {...listeners} className="text-muted-foreground transition-colors hover:text-foreground">
         <GripVertical className="h-5 w-5" />
@@ -183,7 +183,7 @@ export default function StagesSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-[4px] border-border/70 bg-white/80">
+      <Card className="rounded-[4px] border-border/70 bg-card/80">
         <CardHeader>
           <p className="eyebrow-label">Pipeline configuration</p>
           <CardTitle className="mt-2 font-serif text-3xl tracking-[-0.04em]">
@@ -191,10 +191,6 @@ export default function StagesSettingsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-5">
-          <p className="text-sm leading-6 text-muted-foreground">
-            Reorder stages to match the working flow. SLA values control reminder timing, and closed stages are automatically excluded from follow-up prompts.
-          </p>
-
           <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
             <SortableContext items={stages.map((stage) => stage.id)} strategy={verticalListSortingStrategy}>
               <div className="space-y-3">
@@ -218,7 +214,7 @@ export default function StagesSettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-[4px] border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,241,231,0.94))]">
+      <Card className="rounded-[4px] border-border/70 bg-card">
         <CardHeader>
           <p className="eyebrow-label">Add stage</p>
           <CardTitle className="mt-2 font-serif text-3xl tracking-[-0.04em]">

@@ -22,7 +22,7 @@ export function EmptyState({ icon, title, description, action }: EmptyStateProps
         {description}
       </p>
       {action && (
-        <Link href={action.href} className={buttonVariants({ className: "rounded-full px-5" })}>
+        <Link href={action.href} className={buttonVariants({ className: "rounded-[3px] px-5" })}>
           {action.label}
         </Link>
       )}

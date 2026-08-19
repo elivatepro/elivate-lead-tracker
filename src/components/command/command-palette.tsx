@@ -59,19 +59,13 @@ export function CommandPalette() {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
         setOpen((o) => !o);
+        setSearch("");
+        setMode({ kind: "root" });
       }
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-
-  // Reset transient state every time the palette closes.
-  useEffect(() => {
-    if (!open) {
-      setSearch("");
-      setMode({ kind: "root" });
-    }
-  }, [open]);
 
   const close = () => setOpen(false);
 
@@ -173,7 +167,7 @@ export function CommandPalette() {
       }}
     >
       <div
-        className="fixed inset-0 z-[60] bg-ink/30 backdrop-blur-sm"
+        className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm"
         onClick={close}
       />
       <div className="fixed left-1/2 top-[12vh] z-[61] w-[min(620px,calc(100vw-32px))] -translate-x-1/2">
@@ -211,7 +205,7 @@ export function CommandPalette() {
                 <span className="font-medium text-ink">{mode.lead.name}</span>
               )}
               <span className="ml-auto text-[11px] text-ink-4">
-                <kbd className="rounded border border-line bg-white px-1.5 py-[1px] text-[10px]">esc</kbd>
+                <kbd className="rounded border border-line bg-card px-1.5 py-[1px] text-[10px]">esc</kbd>
                 <span className="ml-1.5">back</span>
               </span>
             </div>
@@ -225,7 +219,7 @@ export function CommandPalette() {
               onValueChange={setSearch}
               placeholder={
                 mode.kind === "root"
-                  ? "Search leads, jump to a view, or run an action…"
+                  ? "Search or run an action…"
                   : mode.kind === "stage"
                     ? "Filter stages…"
                     : `Run an action on ${mode.lead.name}…`
@@ -388,13 +382,13 @@ export function CommandPalette() {
           <div className="flex items-center justify-between border-t border-line/60 bg-paper-2/40 px-4 py-2.5 text-[11px] text-ink-4">
             <div className="flex items-center gap-3">
               <span className="inline-flex items-center gap-1">
-                <kbd className="rounded border border-line bg-white px-1.5 py-[1px]">↑↓</kbd> navigate
+                <kbd className="rounded border border-line bg-card px-1.5 py-[1px]">↑↓</kbd> navigate
               </span>
               <span className="inline-flex items-center gap-1">
-                <kbd className="rounded border border-line bg-white px-1.5 py-[1px]">↵</kbd> select
+                <kbd className="rounded border border-line bg-card px-1.5 py-[1px]">↵</kbd> select
               </span>
               <span className="inline-flex items-center gap-1">
-                <kbd className="rounded border border-line bg-white px-1.5 py-[1px]">esc</kbd> back
+                <kbd className="rounded border border-line bg-card px-1.5 py-[1px]">esc</kbd> back
               </span>
             </div>
             <span className="hidden sm:inline">LeadTracker · ⌘K</span>
@@ -426,7 +420,7 @@ function PaletteItem({
       <span className="flex-1 font-medium text-ink">{label}</span>
       {hint && <span className="text-[11px] text-ink-4">{hint}</span>}
       {shortcut && (
-        <kbd className="rounded border border-line bg-white px-1.5 py-[1px] text-[10px] font-medium text-ink-4">
+        <kbd className="rounded border border-line bg-card px-1.5 py-[1px] text-[10px] font-medium text-ink-4">
           {shortcut}
         </kbd>
       )}

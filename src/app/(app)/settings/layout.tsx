@@ -6,6 +6,7 @@ import { Header } from "@/components/layout/header";
 
 const tabs = [
   { href: "/settings", label: "General" },
+  { href: "/settings/email", label: "Email" },
   { href: "/settings/nov", label: "Nov" },
   { href: "/settings/stages", label: "Stages" },
   { href: "/settings/profile", label: "Profile" },
@@ -20,13 +21,9 @@ export default function SettingsLayout({
 
   return (
     <>
-      <Header
-        eyebrow="Settings"
-        title="Tune the workspace around your process."
-        subtitle="Adjust workspace defaults, stage timing, and account details without losing the editorial rhythm of the app."
-      />
+      <Header title="Settings" />
       <div className="space-y-5 px-4 py-6 sm:px-6 lg:px-8">
-        <nav className="inline-flex rounded-[3px] border border-border/70 bg-white/80 p-1 shadow-sm">
+        <nav className="inline-flex rounded-[3px] border border-border/70 bg-card/80 p-1 shadow-sm">
           {tabs.map((tab) => {
             const isActive =
               tab.href === "/settings"

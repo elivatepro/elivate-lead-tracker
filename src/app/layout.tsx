@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono, Source_Serif_4 } from "next/font/google";
+import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { QueryProvider } from "@/components/providers/query-provider";
 import { CommandPalette } from "@/components/command/command-palette";
@@ -65,18 +66,26 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${inter.variable} ${sourceSerif.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans bg-background text-foreground">
-        <QueryProvider>
-          <Suspense fallback={null}>
-            <LeadDetailProvider>
-              {children}
-              <CommandPalette />
-              <Toaster />
-            </LeadDetailProvider>
-          </Suspense>
-        </QueryProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <QueryProvider>
+            <Suspense fallback={null}>
+              <LeadDetailProvider>
+                {children}
+                <CommandPalette />
+                <Toaster />
+              </LeadDetailProvider>
+            </Suspense>
+          </QueryProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

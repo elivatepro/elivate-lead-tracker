@@ -3,17 +3,26 @@
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Search, Trash2, X } from "lucide-react";
+import { Archive, ArchiveRestore, Search, Send, Trash2, X } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { LeadViewNav } from "@/components/layout/lead-view-nav";
 import { useLeads, useUpdateLead } from "@/hooks/use-leads";
 import { useStages } from "@/hooks/use-stages";
+import { useTags } from "@/hooks/use-tags";
 import { NewLeadDialog } from "@/components/leads/new-lead-dialog";
 import { ImportLeadsDialog } from "@/components/leads/import-leads-dialog";
+import { EmailComposeDialog } from "@/components/emails/email-compose-dialog";
 import { useLeadDetail } from "@/components/leads/lead-detail-viewer";
 import { EmptyState } from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { daysSince, formatFullCurrency, getLeadInitials, getLeadSlaState } from "@/lib/lead-utils";
 
 export default function ListPage() {
@@ -30,6 +39,11 @@ function ListPageContent() {
   const [searchDraft, setSearchDraft] = useState<string | undefined>(undefined);
   const [stageFilter, setStageFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkStage, setBulkStage] = useState("");
+  const [composeOpen, setComposeOpen] = useState(false);
+  const [tagFilter, setTagFilter] = useState("");
+  const [archivedView, setArchivedView] = useState(false);
+  const { data: allTags = [] } = useTags();
   const { data: stages = [] } = useStages();
   const updateLead = useUpdateLead();
   const { openLead } = useLeadDetail();
@@ -38,18 +52,23 @@ function ListPageContent() {
   const { data: leads = [], isLoading } = useLeads({
     search: search || undefined,
     stage: stageFilter || undefined,
+    archived: archivedView || undefined,
   });
 
-  const allSelected = leads.length > 0 && selected.size === leads.length;
+  const visibleLeads = tagFilter
+    ? leads.filter((lead) => lead.tags.includes(tagFilter))
+    : leads;
+
+  const allSelected = visibleLeads.length > 0 && selected.size === visibleLeads.length;
   const selectedCount = selected.size;
 
   const selectedStats = useMemo(() => {
-    const picked = leads.filter((lead) => selected.has(lead.id));
+    const picked = visibleLeads.filter((lead) => selected.has(lead.id));
     return {
       count: picked.length,
       value: picked.reduce((sum, lead) => sum + (lead.value ?? 0), 0),
     };
-  }, [leads, selected]);
+  }, [visibleLeads, selected]);
 
   function toggleAll() {
     if (allSelected) {
@@ -57,7 +76,7 @@ function ListPageContent() {
       return;
     }
 
-    setSelected(new Set(leads.map((lead) => lead.id)));
+    setSelected(new Set(visibleLeads.map((lead) => lead.id)));
   }
 
   function toggleOne(id: string) {
@@ -67,8 +86,38 @@ function ListPageContent() {
     setSelected(next);
   }
 
-  async function bulkDelete() {
-    if (!confirm(`Delete ${selectedCount} lead${selectedCount > 1 ? "s" : ""}?`)) return;
+  async function bulkArchive() {
+    if (!confirm(`Archive ${selectedCount} lead${selectedCount > 1 ? "s" : ""}?`)) return;
+
+    for (const id of selected) {
+      await fetch(`/api/leads/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived_at: new Date().toISOString() }),
+      });
+    }
+
+    setSelected(new Set());
+    queryClient.invalidateQueries({ queryKey: ["leads"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+  }
+
+  async function bulkRestore() {
+    for (const id of selected) {
+      await fetch(`/api/leads/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived_at: null }),
+      });
+    }
+
+    setSelected(new Set());
+    queryClient.invalidateQueries({ queryKey: ["leads"] });
+    queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+  }
+
+  async function bulkPermanentDelete() {
+    if (!confirm(`Delete ${selectedCount} lead${selectedCount > 1 ? "s" : ""} permanently?`)) return;
 
     for (const id of selected) {
       await fetch(`/api/leads/${id}`, { method: "DELETE" });
@@ -96,9 +145,7 @@ function ListPageContent() {
   return (
     <>
       <Header
-        eyebrow="Lead list"
-        title="A clean table for bulk work."
-        subtitle="Search, fix incomplete records, change stages in batches, and keep reminder state visible while you edit."
+        title="Lead list"
         actions={
           <div className="flex items-center gap-2">
             <ImportLeadsDialog />
@@ -112,11 +159,11 @@ function ListPageContent() {
           <LeadViewNav />
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {[
-              { label: "Visible leads", value: leads.length },
+              { label: "Visible leads", value: visibleLeads.length },
               { label: "Selected", value: selectedStats.count },
               { label: "Selected value", value: formatFullCurrency(selectedStats.value) },
             ].map((item) => (
-              <div key={item.label} className="rounded-[3px] border border-border/70 bg-white/75 px-4 py-3">
+              <div key={item.label} className="rounded-[3px] border border-border/70 bg-card/75 px-4 py-3">
                 <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
                 <p className="mt-2 font-serif text-2xl tracking-[-0.03em]">{item.value}</p>
               </div>
@@ -128,30 +175,53 @@ function ListPageContent() {
           <div className="surface-panel flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center">
             <div>
               <p className="text-sm font-medium text-foreground">{selectedCount} lead{selectedCount > 1 ? "s" : ""} selected</p>
-              <p className="text-sm text-muted-foreground">Move them together or clear them out after review.</p>
             </div>
             <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
-              <select
-                className="h-10 rounded-[3px] border border-input bg-white px-4 text-sm"
-                defaultValue=""
-                onChange={(e) => {
-                  if (e.target.value) bulkChangeStage(e.target.value);
-                  e.target.value = "";
-                }}
-              >
-                <option value="" disabled>
-                  Move to stage…
-                </option>
-                {stages.map((stage) => (
-                  <option key={stage.id} value={stage.id}>
-                    {stage.name}
-                  </option>
-                ))}
-              </select>
-              <Button variant="destructive" className="rounded-[3px]" onClick={bulkDelete}>
-                <Trash2 className="h-4 w-4" />
-                Delete
-              </Button>
+              {archivedView ? (
+                <>
+                  <Button variant="outline" className="rounded-[3px]" onClick={bulkRestore}>
+                    <ArchiveRestore className="h-4 w-4" />
+                    Restore
+                  </Button>
+                  <Button variant="destructive" className="rounded-[3px]" onClick={bulkPermanentDelete}>
+                    <Trash2 className="h-4 w-4" />
+                    Delete
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Select
+                    value={bulkStage || null}
+                    onValueChange={(value) => {
+                      if (value) bulkChangeStage(value);
+                      setBulkStage("");
+                    }}
+                  >
+                    <SelectTrigger className="h-10 rounded-[3px] bg-card px-4">
+                      <SelectValue placeholder="Move to stage…" />
+                    </SelectTrigger>
+                    <SelectContent align="start">
+                      {stages.map((stage) => (
+                        <SelectItem key={stage.id} value={stage.id}>
+                          {stage.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    className="rounded-[3px]"
+                    onClick={() => setComposeOpen(true)}
+                  >
+                    <Send className="h-4 w-4" />
+                    Email
+                  </Button>
+                  <Button variant="destructive" className="rounded-[3px]" onClick={bulkArchive}>
+                    <Archive className="h-4 w-4" />
+                    Archive
+                  </Button>
+                </>
+              )}
               <Button variant="ghost" className="rounded-[3px]" onClick={() => setSelected(new Set())}>
                 <X className="h-4 w-4" />
                 Clear
@@ -171,28 +241,59 @@ function ListPageContent() {
                 onChange={(e) => setSearchDraft(e.target.value)}
               />
             </div>
-            <select
-              className="h-11 rounded-[3px] border border-input bg-white px-4 text-sm"
-              value={stageFilter}
-              onChange={(e) => setStageFilter(e.target.value)}
+<Select
+              value={stageFilter || null}
+              onValueChange={(value) => setStageFilter(value ?? "")}
             >
-              <option value="">All stages</option>
-              {stages.map((stage) => (
-                <option key={stage.id} value={stage.id}>
-                  {stage.name}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger className="h-11 rounded-[3px] bg-card px-4">
+                <SelectValue placeholder="All stages" />
+              </SelectTrigger>
+              <SelectContent className="w-full" align="start">
+                <SelectItem value="">All stages</SelectItem>
+                {stages.map((stage) => (
+                  <SelectItem key={stage.id} value={stage.id}>
+                    {stage.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={tagFilter || null}
+              onValueChange={(value) => setTagFilter(value ?? "")}
+            >
+              <SelectTrigger className="h-11 rounded-[3px] bg-card px-4">
+                <SelectValue placeholder="All tags" />
+              </SelectTrigger>
+              <SelectContent className="w-full" align="start">
+                <SelectItem value="">All tags</SelectItem>
+                {allTags.map((tag) => (
+                  <SelectItem key={tag} value={tag}>
+                    {tag}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="ghost"
+              className={`h-11 rounded-[3px] px-4 ${archivedView ? "bg-ink text-paper" : ""}`}
+              onClick={() => {
+                setArchivedView((prev) => !prev);
+                setSelected(new Set());
+              }}
+            >
+              <Archive className="h-4 w-4" />
+              Archived
+            </Button>
           </div>
 
           {isLoading ? (
             <div className="flex items-center justify-center py-16">
               <p className="text-sm text-muted-foreground">Loading leads…</p>
             </div>
-          ) : !leads.length ? (
+          ) : !visibleLeads.length ? (
             <EmptyState
-              title="No leads match this view"
-              description={search ? "Try a broader search or clear the active stage filter." : "Add your first lead to start building the table."}
+              title={search ? "No matches" : "No leads yet"}
+              description={search ? "Try a broader search." : "Add a lead to get started."}
             />
           ) : (
             <div className="overflow-hidden rounded-[4px] border border-border/70">
@@ -212,8 +313,8 @@ function ListPageContent() {
                 <div className="text-right">Value</div>
               </div>
 
-              <div className="divide-y divide-border/70 bg-white/80">
-                {leads.map((lead) => {
+              <div className="divide-y divide-border/70 bg-card/80">
+                {visibleLeads.map((lead) => {
                   const state = getLeadSlaState(lead);
 
                   return (
@@ -245,17 +346,23 @@ function ListPageContent() {
                       </a>
 
                       <div className="space-y-2">
-                        <select
-                          className="h-10 w-full rounded-[3px] border border-input bg-white px-4 text-sm"
+                        <Select
                           value={lead.stage_id}
-                          onChange={(e) => updateLead.mutate({ id: lead.id, stage_id: e.target.value })}
+                          onValueChange={(value) =>
+                            value && updateLead.mutate({ id: lead.id, stage_id: value })
+                          }
                         >
-                          {stages.map((stage) => (
-                            <option key={stage.id} value={stage.id}>
-                              {stage.name}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger className="h-10 w-full rounded-[3px] bg-card px-4">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className="w-full" align="start">
+                            {stages.map((stage) => (
+                              <SelectItem key={stage.id} value={stage.id}>
+                                {stage.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                         <p className="text-sm text-muted-foreground">{lead.company || "Independent lead"}</p>
                       </div>
 
@@ -273,7 +380,21 @@ function ListPageContent() {
 
                       <div className="text-left lg:text-right">
                         <p className="font-medium">{formatFullCurrency(lead.value)}</p>
-                        <p className="text-sm text-muted-foreground">{lead.tags?.length ? `${lead.tags.length} tags` : "No tags"}</p>
+                        {archivedView ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              updateLead.mutate({ id: lead.id, archived_at: null })
+                            }
+                            className="text-sm text-primary transition-colors hover:text-primary/70 hover:underline"
+                          >
+                            Restore
+                          </button>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            {lead.tags?.length ? `${lead.tags.length} tags` : "No tags"}
+                          </p>
+                        )}
                       </div>
                     </div>
                   );
@@ -282,6 +403,14 @@ function ListPageContent() {
             </div>
           )}
         </div>
+
+        <EmailComposeDialog
+          open={composeOpen}
+          onOpenChange={setComposeOpen}
+          leads={leads
+            .filter((lead) => selected.has(lead.id))
+            .map((lead) => ({ id: lead.id, name: lead.name, email: lead.email }))}
+        />
       </div>
     </>
   );
@@ -291,9 +420,7 @@ function ListPageFallback() {
   return (
     <>
       <Header
-        eyebrow="Lead list"
-        title="A clean table for bulk work."
-        subtitle="Search, fix incomplete records, change stages in batches, and keep reminder state visible while you edit."
+        title="Lead list"
       />
 
       <div className="px-4 py-6 sm:px-6 lg:px-8">

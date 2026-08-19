@@ -80,7 +80,7 @@ function LoginFormInner() {
 
   if (magicLinkSent) {
     return (
-      <Card className="rounded-[4px] border-border/70 bg-white/85">
+      <Card className="rounded-[4px] border-border/70 bg-card/85">
         <CardContent className="space-y-5 py-10 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[3px] bg-primary/10 text-primary">
             <svg className="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
@@ -113,7 +113,7 @@ function LoginFormInner() {
   }
 
   return (
-    <Card className="rounded-[4px] border-border/70 bg-white/85">
+    <Card className="rounded-[4px] border-border/70 bg-card/85">
       <CardHeader className="space-y-3">
         <CardTitle className="font-serif text-4xl tracking-[-0.04em]">Welcome back</CardTitle>
         <CardDescription className="text-sm leading-6">

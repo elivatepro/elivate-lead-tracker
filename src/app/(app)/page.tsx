@@ -41,12 +41,7 @@ export default function DashboardPage() {
   return (
     <>
       <Header
-        eyebrow="Dashboard"
-        title={
-          isLoading
-            ? "Loading your pipeline…"
-            : `${active} leads in motion, ${staleCount} going stale.`
-        }
+        title="Dashboard"
         actions={
           <div className="flex items-center gap-2">
             <ImportLeadsDialog />
@@ -104,7 +99,7 @@ export default function DashboardPage() {
           </header>
           {stale.length === 0 ? (
             <p className="border-t border-line/70 px-5 py-10 text-center text-[13px] text-ink-4">
-              Nothing is stale right now. Open the board to keep momentum.
+              Nothing stale right now.
             </p>
           ) : (
             <ul className="divide-y divide-line/60 border-t border-line/70">

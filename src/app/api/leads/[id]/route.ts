@@ -67,7 +67,39 @@ export async function PATCH(
     updates.phone = normalizeContactField(body.phone);
   }
 
-  if (body.stage_id && body.stage_id !== oldLead.stage_id) {
+  if (body.archived_at !== undefined) {
+    const archived = Boolean(body.archived_at);
+    await ctx.supabase.from("activities").insert({
+      workspace_id: ctx.workspace.id,
+      lead_id: id,
+      type: archived ? ("archived" as const) : ("restored" as const),
+      actor_id: ctx.user.id,
+      payload: { archived_at: body.archived_at ?? null },
+    });
+  } else if (body.snoozed_until !== undefined) {
+    const until = body.snoozed_until ? new Date(body.snoozed_until) : null;
+    const days = until
+      ? Math.max(1, Math.round((until.getTime() - Date.now()) / 86_400_000))
+      : null;
+
+    if (until && days) {
+      await ctx.supabase.from("activities").insert({
+        workspace_id: ctx.workspace.id,
+        lead_id: id,
+        type: "snoozed" as const,
+        actor_id: ctx.user.id,
+        payload: { snoozed_until: until.toISOString(), days },
+      });
+    } else {
+      await ctx.supabase.from("activities").insert({
+        workspace_id: ctx.workspace.id,
+        lead_id: id,
+        type: "field_edited" as const,
+        actor_id: ctx.user.id,
+        payload: { fields: ["snoozed_until"] },
+      });
+    }
+  } else if (body.stage_id && body.stage_id !== oldLead.stage_id) {
     const { data: newStage } = await ctx.supabase
       .from("stages")
       .select("is_closed, name")

@@ -45,7 +45,7 @@ function CompactCard({ lead }: { lead: LeadWithStage }) {
       href={`/leads/${lead.id}`}
       onClick={(e) => openLead(lead.id, e)}
       className={`group flex items-center gap-2.5 rounded-[3px] border bg-card px-3 py-2 transition-colors ${
-        sla.stale ? "border-stale/25 bg-[linear-gradient(90deg,rgba(185,79,46,0.04),white_60%)]" : "border-line hover:border-line-3"
+        sla.stale ? "border-stale/25 bg-gradient-to-r from-stale/5 to-card" : "border-line hover:border-line-3"
       }`}
     >
       <span className={`h-2 w-2 shrink-0 rounded-[2px] ${dotColor(sla.tone)}`} />
@@ -66,7 +66,7 @@ function ComfortableCard({ lead }: { lead: LeadWithStage }) {
       onClick={(e) => openLead(lead.id, e)}
       className={`group block rounded-[3px] border bg-card p-3 transition-colors ${
         sla.stale
-          ? "border-stale/25 bg-[linear-gradient(180deg,rgba(255,252,249,0.96),rgba(249,232,226,0.92))]"
+          ? "border-stale/25 bg-stale/5"
           : "border-line hover:border-line-3"
       }`}
     >
@@ -112,7 +112,7 @@ function RichCard({ lead }: { lead: LeadWithStage }) {
     <div
       className={`group rounded-[3px] border p-3.5 transition-colors ${
         sla.stale
-          ? "border-stale/25 bg-[linear-gradient(180deg,rgba(255,252,249,0.96),rgba(249,232,226,0.92))]"
+          ? "border-stale/25 bg-stale/5"
           : "border-line bg-card hover:border-line-3"
       }`}
     >

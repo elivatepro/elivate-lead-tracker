@@ -213,7 +213,7 @@ export function NovPanel({ variant }: { variant: Variant }) {
   return (
     <>
       {isOverlay && (
-        <div className="fixed inset-0 z-40 bg-ink/30 backdrop-blur-sm" onClick={() => setOpen(false)} />
+        <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)} />
       )}
       <aside className={containerClass} style={panelStyle}>
         {isOverlay ? (
@@ -294,7 +294,7 @@ export function NovPanel({ variant }: { variant: Variant }) {
         {/* composer */}
         <div className="border-t border-line/70 bg-paper-2/30 px-3 py-2.5">
           {contextLead && (
-            <div className="mb-2 inline-flex items-center gap-1.5 rounded-[3px] border border-line bg-white px-2 py-1 text-[11px] text-ink-2">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-[3px] border border-line bg-card px-2 py-1 text-[11px] text-ink-2">
               <span className="font-medium">@{contextLead.name}</span>
               <button
                 type="button"
@@ -353,7 +353,7 @@ function MessageBubble({ message }: { message: NovMessage }) {
               {message.leadRefs.map((ref) => (
                 <span
                   key={ref.id}
-                  className="rounded-[2px] border border-ember/30 bg-white px-1.5 py-px text-[10px] font-medium text-ember"
+                  className="rounded-[2px] border border-ember/30 bg-card px-1.5 py-px text-[10px] font-medium text-ember"
                 >
                   @{ref.name}
                 </span>

@@ -11,10 +11,10 @@ import type { Workspace } from "@/lib/types";
 
 type NovTone = "warm" | "direct" | "casual";
 
-const TONES: { value: NovTone; label: string; description: string }[] = [
-  { value: "warm", label: "Warm", description: "Friendly, thoughtful, and human." },
-  { value: "direct", label: "Direct", description: "Clear, efficient, and straight to the point." },
-  { value: "casual", label: "Casual", description: "Relaxed, conversational, and low-pressure." },
+const TONES: { value: NovTone; label: string }[] = [
+  { value: "warm", label: "Warm" },
+  { value: "direct", label: "Direct" },
+  { value: "casual", label: "Casual" },
 ];
 
 export default function NovSettingsPage() {
@@ -85,7 +85,7 @@ export default function NovSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-[4px] border-border/70 bg-white/80">
+      <Card className="rounded-[4px] border-border/70 bg-card/80">
         <CardHeader>
           <p className="eyebrow-label">Nov</p>
           <CardTitle className="mt-2 font-serif text-3xl tracking-[-0.04em]">
@@ -146,7 +146,7 @@ export default function NovSettingsPage() {
         </CardContent>
       </Card>
 
-      <Card className="rounded-[4px] border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,241,231,0.94))]">
+      <Card className="rounded-[4px] border-border/70 bg-card">
         <CardHeader>
           <p className="eyebrow-label">Style</p>
           <CardTitle className="mt-2 font-serif text-3xl tracking-[-0.04em]">
@@ -163,19 +163,10 @@ export default function NovSettingsPage() {
                 className={`rounded-[3px] border px-4 py-3 text-left transition-colors ${
                   current.nov_preferred_tone === tone.value
                     ? "border-foreground bg-foreground text-background"
-                    : "border-border/70 bg-white/75 text-foreground hover:border-foreground/40"
+                    : "border-border/70 bg-card/75 text-foreground hover:border-foreground/40"
                 }`}
               >
                 <p className="font-medium">{tone.label}</p>
-                <p
-                  className={`mt-1 text-sm ${
-                    current.nov_preferred_tone === tone.value
-                      ? "text-background/80"
-                      : "text-muted-foreground"
-                  }`}
-                >
-                  {tone.description}
-                </p>
               </button>
             ))}
           </div>
@@ -183,19 +174,16 @@ export default function NovSettingsPage() {
           <div className="space-y-3">
             <ToggleRow
               label="Keep messages concise"
-              description="Favor short, usable drafts over long explanations."
               checked={current.nov_be_concise}
               onChange={(checked) => updateField("nov_be_concise", checked)}
             />
             <ToggleRow
               label="Avoid pushy language"
-              description="Keep follow-ups helpful and low-pressure."
               checked={current.nov_avoid_pushy_language}
               onChange={(checked) => updateField("nov_avoid_pushy_language", checked)}
             />
             <ToggleRow
               label="Include a booking invite"
-              description="When useful, suggest a call or meeting in the draft."
               checked={current.nov_include_booking_prompt}
               onChange={(checked) => updateField("nov_include_booking_prompt", checked)}
             />
@@ -218,27 +206,22 @@ export default function NovSettingsPage() {
 
 function ToggleRow({
   label,
-  description,
   checked,
   onChange,
 }: {
   label: string;
-  description: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
 }) {
   return (
-    <label className="flex items-start gap-3 rounded-[3px] border border-border/70 bg-white/75 px-4 py-3">
+    <label className="flex items-start gap-3 rounded-[3px] border border-border/70 bg-card/75 px-4 py-3">
       <input
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
         className="mt-1 h-4 w-4 rounded accent-primary"
       />
-      <div>
-        <p className="font-medium">{label}</p>
-        <p className="text-sm text-muted-foreground">{description}</p>
-      </div>
+      <p className="font-medium">{label}</p>
     </label>
   );
 }

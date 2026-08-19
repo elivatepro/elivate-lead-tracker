@@ -77,7 +77,7 @@ export default function GeneralSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="rounded-[4px] border-border/70 bg-white/80">
+      <Card className="rounded-[4px] border-border/70 bg-card/80">
         <CardHeader>
           <p className="eyebrow-label">Workspace</p>
           <CardTitle className="mt-2 font-serif text-3xl tracking-[-0.04em]">
@@ -95,13 +95,10 @@ export default function GeneralSettingsPage() {
               className="h-11 rounded-[3px]"
             />
           </div>
-          <div className="rounded-[3px] border border-border/70 bg-secondary/35 px-4 py-4 text-sm leading-6 text-muted-foreground">
-            This name appears in the editorial sidebar and helps anchor the workspace across all lead views.
-          </div>
         </CardContent>
       </Card>
 
-      <Card className="rounded-[4px] border-border/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,241,231,0.94))]">
+      <Card className="rounded-[4px] border-border/70 bg-card">
         <CardHeader>
           <p className="eyebrow-label">Quality rules</p>
           <CardTitle className="mt-2 font-serif text-3xl tracking-[-0.04em]">
@@ -109,14 +106,11 @@ export default function GeneralSettingsPage() {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          <p className="text-sm leading-6 text-muted-foreground">
-            Leads missing any checked field will count as incomplete on the dashboard and help you catch records that still need cleanup.
-          </p>
           <div className="grid gap-3 md:grid-cols-2">
             {AVAILABLE_FIELDS.map((field) => (
               <label
                 key={field.key}
-                className="flex items-center gap-3 rounded-[3px] border border-border/70 bg-white/75 px-4 py-3"
+                className="flex items-center gap-3 rounded-[3px] border border-border/70 bg-card/75 px-4 py-3"
               >
                 <input
                   type="checkbox"

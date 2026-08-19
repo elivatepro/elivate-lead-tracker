@@ -65,7 +65,7 @@ export default function SignupPage() {
 
   if (verificationSent) {
     return (
-      <Card className="rounded-[4px] border-border/70 bg-white/85">
+      <Card className="rounded-[4px] border-border/70 bg-card/85">
         <CardHeader className="space-y-3">
           <CardTitle className="font-serif text-4xl tracking-[-0.04em]">Check your email</CardTitle>
           <CardDescription className="text-sm leading-6">
@@ -88,7 +88,7 @@ export default function SignupPage() {
   }
 
   return (
-    <Card className="rounded-[4px] border-border/70 bg-white/85">
+    <Card className="rounded-[4px] border-border/70 bg-card/85">
       <CardHeader className="space-y-3">
         <CardTitle className="font-serif text-4xl tracking-[-0.04em]">Create your account</CardTitle>
         <CardDescription className="text-sm leading-6">

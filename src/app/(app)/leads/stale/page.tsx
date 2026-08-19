@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertCircle, PartyPopper } from "lucide-react";
+import { PartyPopper } from "lucide-react";
 import { Header } from "@/components/layout/header";
 import { LeadViewNav } from "@/components/layout/lead-view-nav";
 import { useLeads } from "@/hooks/use-leads";
@@ -15,9 +15,7 @@ export default function StalePage() {
   return (
     <>
       <Header
-        eyebrow="Stale"
-        title="A focused catch-up view for overdue leads."
-        subtitle="Everything here has passed its stage SLA. Work from oldest to newest and clear the queue before opening new tabs."
+        title="Stale"
       />
 
       <div className="space-y-5 px-4 py-6 sm:px-6 lg:px-8">
@@ -29,7 +27,7 @@ export default function StalePage() {
               { label: "Oldest touch", value: leads[0] ? daysSince(leads[0].last_activity_at) : "--" },
               { label: "Value at risk", value: formatFullCurrency(totalValue) },
             ].map((item) => (
-              <div key={item.label} className="rounded-[3px] border border-border/70 bg-white/75 px-4 py-3">
+              <div key={item.label} className="rounded-[3px] border border-border/70 bg-card/75 px-4 py-3">
                 <p className="text-[10px] uppercase tracking-[0.16em] text-muted-foreground">{item.label}</p>
                 <p className="mt-2 font-serif text-2xl tracking-[-0.03em]">{item.value}</p>
               </div>
@@ -49,24 +47,10 @@ export default function StalePage() {
               description="You’re all caught up. Every live opportunity is still within its follow-up window."
             />
           ) : (
-            <div className="space-y-5">
-              <div className="rounded-[4px] border border-stale/20 bg-stale/8 px-5 py-4">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="mt-0.5 h-5 w-5 text-stale" />
-                  <div>
-                    <p className="font-medium text-stale">Catch-up mode is on</p>
-                    <p className="mt-1 text-sm leading-6 text-stale/85">
-                      Start with the oldest lead below. Once it has a note, reminder, or stage move, it will leave this view automatically.
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-                {leads.map((lead) => (
-                  <LeadCard key={lead.id} lead={lead} />
-                ))}
-              </div>
+            <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+              {leads.map((lead) => (
+                <LeadCard key={lead.id} lead={lead} />
+              ))}
             </div>
           )}
         </div>

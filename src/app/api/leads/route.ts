@@ -12,6 +12,7 @@ export async function GET(req: Request) {
   const stale = searchParams.get("stale");
   const search = searchParams.get("search");
   const tag = searchParams.get("tag");
+  const archived = searchParams.get("archived");
 
   let query = ctx.supabase
     .from("leads")
@@ -19,6 +20,11 @@ export async function GET(req: Request) {
     .eq("workspace_id", ctx.workspace.id)
     .order("created_at", { ascending: false });
 
+  if (archived === "true") {
+    query = query.not("archived_at", "is", null);
+  } else {
+    query = query.is("archived_at", null);
+  }
   if (stage) query = query.eq("stage_id", stage);
   if (tag) query = query.contains("tags", [tag]);
   if (search)

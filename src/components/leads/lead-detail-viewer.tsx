@@ -196,7 +196,7 @@ function LeadPeekShell({
         type="button"
         aria-label="Close lead detail"
         onClick={onClose}
-        className="absolute inset-0 bg-ink/30 supports-backdrop-filter:backdrop-blur-[2px]"
+        className="absolute inset-0 bg-black/40 supports-backdrop-filter:backdrop-blur-[2px]"
       />
       <aside
         role="dialog"
@@ -238,13 +238,13 @@ function PeekHeader({
       <div className="flex items-center gap-1 rounded-[3px] bg-paper-2 p-0.5">
         <ModeButton
           active={mode === "side"}
-          label="Side peek"
+          label="Side"
           onClick={() => setMode("side")}
           icon={<PanelRight className="h-3.5 w-3.5" />}
         />
         <ModeButton
           active={mode === "center"}
-          label="Center peek"
+          label="Center"
           onClick={() => setMode("center")}
           icon={<Square className="h-3.5 w-3.5" />}
         />
@@ -295,7 +295,7 @@ function ModeButton({
       aria-pressed={active}
       onClick={onClick}
       className={`inline-flex items-center gap-1.5 rounded-[2px] px-2 py-1 text-[11px] font-medium transition-colors ${
-        active ? "bg-white text-ink shadow-sm" : "text-ink-4 hover:text-ink"
+        active ? "bg-card text-ink shadow-sm" : "text-ink-4 hover:text-ink"
       }`}
     >
       {icon}
