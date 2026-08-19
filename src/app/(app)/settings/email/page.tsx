@@ -23,6 +23,7 @@ type EmailSettings = {
 export default function EmailSettingsPage() {
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
+  const [lastError, setLastError] = useState("");
   const [host, setHost] = useState("");
   const [port, setPort] = useState("587");
   const [user, setUser] = useState("");
@@ -71,9 +72,11 @@ export default function EmailSettingsPage() {
 if (res.ok) {
       setPassword("");
       setHasPassword(Boolean(user) || Boolean(password));
+      setLastError("");
       toast.success("Email settings saved");
     } else {
       const data = (await res.json().catch(() => null)) as { error?: string } | null;
+      setLastError(data?.error ?? "Couldn't save settings");
       toast.error(data?.error ?? "Couldn't save settings");
     }
     setSaving(false);
@@ -99,8 +102,10 @@ if (res.ok) {
       | null;
 
     if (data?.ok) {
+      setLastError("");
       toast.success("Test email sent — check your inbox");
     } else {
+      setLastError(data?.error ?? "Couldn't send test email");
       toast.error(data?.error ?? "Couldn't send test email");
     }
     setTesting(false);
@@ -115,6 +120,20 @@ if (res.ok) {
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <p className="rounded-[3px] border border-border/70 bg-paper-2/60 px-3 py-2 text-xs leading-relaxed text-ink-3">
+            For Gmail: host <span className="font-medium text-ink">smtp.gmail.com</span>,
+            port <span className="font-medium text-ink">587</span>, username your Gmail
+            address, and an{" "}
+            <a
+              href="https://myaccount.google.com/apppasswords"
+              target="_blank"
+              rel="noreferrer"
+              className="font-medium text-ember underline underline-offset-2"
+            >
+              App Password
+            </a>{" "}
+            (not your normal password).
+          </p>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label>Host</Label>
@@ -236,6 +255,11 @@ if (res.ok) {
           {saving ? "Saving…" : "Save settings"}
         </Button>
       </div>
+      {lastError ? (
+        <p className="rounded-[3px] border border-destructive/30 bg-destructive/5 px-3 py-2 text-xs leading-relaxed text-destructive">
+          {lastError}
+        </p>
+      ) : null}
     </div>
   );
 }

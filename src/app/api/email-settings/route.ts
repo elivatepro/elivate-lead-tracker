@@ -52,6 +52,15 @@ export async function PUT(req: Request) {
       updates.smtp_pass_encrypted = encryptSecret(body.smtp_password);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Encryption failed";
+      if (message.includes("EMAIL_ENC_KEY")) {
+        return NextResponse.json(
+          {
+            error:
+              "The server is missing the EMAIL_ENC_KEY variable. Add it in Vercel → Settings → Environment Variables (value: the 32-byte base64 key from .env.local), then redeploy.",
+          },
+          { status: 500 }
+        );
+      }
       return NextResponse.json(
         { error: `Couldn't encrypt password: ${message}` },
         { status: 500 }

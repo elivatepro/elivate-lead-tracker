@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedContext } from "@/lib/supabase/queries";
 import { decryptSecret } from "@/lib/email/encrypt";
-import { sendEmail } from "@/lib/email/smtp";
+import { describeSmtpError, sendEmail } from "@/lib/email/smtp";
 
 type TestBody = {
   smtp_host?: string;
@@ -79,8 +79,10 @@ export async function POST(req: Request) {
         "<p>If you can read this, your SMTP settings are working.</p><p>— LeadTracker</p>",
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    return NextResponse.json({ ok: false, error: message }, { status: 200 });
+    return NextResponse.json(
+      { ok: false, error: describeSmtpError(err, { host, port }) },
+      { status: 200 }
+    );
   }
 
   return NextResponse.json({ ok: true });

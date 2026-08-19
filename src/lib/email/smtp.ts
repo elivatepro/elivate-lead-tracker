@@ -52,3 +52,20 @@ export async function sendEmail({
     html,
   });
 }
+
+export function describeSmtpError(
+  err: unknown,
+  { host, port }: { host: string; port: number }
+): string {
+  const message = err instanceof Error ? err.message : String(err);
+
+  if (/ETIMEDOUT|ECONNREFUSED|ENOTFOUND|EHOSTUNREACH/.test(message)) {
+    return `Couldn't reach ${host}:${port} (${message}). Check the host and port — for Gmail use smtp.gmail.com with port 587 (STARTTLS) or 465 (SSL).`;
+  }
+
+  if (/invalid login|535|EAUTH|authentication failed|login failed|username and password/i.test(message)) {
+    return `Login to ${host} rejected (${message}). For Gmail, create an App Password at myaccount.google.com/apppasswords and use that — not your normal password.`;
+  }
+
+  return `${message} (${host}:${port})`;
+}
