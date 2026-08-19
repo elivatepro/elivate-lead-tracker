@@ -8,6 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 type EmailSettings = {
   smtp_host: string;
@@ -18,6 +27,7 @@ type EmailSettings = {
   email_signature: string;
   email_batch_size: number;
   email_batch_delay: number;
+  to_email: string;
 };
 
 export default function EmailSettingsPage() {
@@ -33,6 +43,8 @@ export default function EmailSettingsPage() {
   const [batchSize, setBatchSize] = useState("10");
   const [batchDelay, setBatchDelay] = useState("5");
   const [hasPassword, setHasPassword] = useState(false);
+  const [testOpen, setTestOpen] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
 
   useEffect(() => {
     fetch("/api/email-settings")
@@ -46,6 +58,7 @@ export default function EmailSettingsPage() {
         setBatchSize(String(data.email_batch_size ?? 10));
         setBatchDelay(String(data.email_batch_delay ?? 5));
         setHasPassword(data.has_password);
+        setTestEmail(data.to_email ?? "");
       })
       .catch(() => toast.error("Couldn’t load email settings"));
   }, []);
@@ -82,13 +95,18 @@ if (res.ok) {
     setSaving(false);
   }
 
-  async function handleTest() {
+  function handleTest() {
+    setTestOpen(true);
+  }
+
+  async function handleTestSubmit() {
     setTesting(true);
     const payload: Record<string, unknown> = {
       smtp_host: host,
       smtp_port: Number(port),
       smtp_user: user,
       email_from_name: fromName,
+      to_email: testEmail,
     };
     if (password) payload.smtp_password = password;
 
@@ -103,7 +121,8 @@ if (res.ok) {
 
     if (data?.ok) {
       setLastError("");
-      toast.success("Test email sent — check your inbox");
+      setTestOpen(false);
+      toast.success(`Test email sent to ${testEmail} — check the inbox`);
     } else {
       setLastError(data?.error ?? "Couldn't send test email");
       toast.error(data?.error ?? "Couldn't send test email");
@@ -260,6 +279,40 @@ if (res.ok) {
           {lastError}
         </p>
       ) : null}
+
+      <Dialog open={testOpen} onOpenChange={setTestOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Send a test email</DialogTitle>
+            <DialogDescription>
+              The email will be sent through your SMTP settings to the address
+              below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="test-email">Deliver to</Label>
+            <Input
+              id="test-email"
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+              type="email"
+              placeholder="you@example.com"
+              className="h-10 rounded-[3px]"
+            />
+          </div>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" className="rounded-[3px]">Cancel</Button>} />
+            <Button
+              onClick={handleTestSubmit}
+              disabled={testing}
+              className="rounded-[3px]"
+            >
+              <Send className="h-4 w-4" />
+              {testing ? "Sending…" : "Send test"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

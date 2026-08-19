@@ -9,7 +9,10 @@ type TestBody = {
   smtp_user?: string;
   smtp_password?: string;
   email_from_name?: string;
+  to_email?: string;
 };
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // POST /api/email-settings/test — send a test email with current form values
 // (falls back to saved settings for anything not passed)
@@ -17,14 +20,15 @@ export async function POST(req: Request) {
   const ctx = await getAuthenticatedContext();
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  if (!ctx.user.email) {
+  const body = (await req.json().catch(() => ({}))) as TestBody;
+
+  const toEmail = body.to_email?.trim() || ctx.user.email || "";
+  if (!EMAIL_RE.test(toEmail)) {
     return NextResponse.json(
-      { error: "No email on your account to send the test to" },
+      { error: "Enter a valid email address to receive the test" },
       { status: 400 }
     );
   }
-
-  const body = (await req.json().catch(() => ({}))) as TestBody;
 
   const { data } = await ctx.supabase
     .from("workspaces")
@@ -73,7 +77,7 @@ export async function POST(req: Request) {
       user,
       pass,
       from,
-      to: ctx.user.email,
+      to: toEmail,
       subject: "Test email from LeadTracker",
       html:
         "<p>If you can read this, your SMTP settings are working.</p><p>— LeadTracker</p>",

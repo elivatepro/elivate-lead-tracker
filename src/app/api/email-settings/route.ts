@@ -26,6 +26,7 @@ export async function GET() {
     email_signature: data.email_signature ?? "",
     email_batch_size: data.email_batch_size,
     email_batch_delay: data.email_batch_delay,
+    to_email: ctx.user.email ?? "",
   });
 }
 
