@@ -101,7 +101,9 @@ create policy "Users see own email log" on email_log
 -- 6. KEEP ARCHIVED LEADS OUT OF REMINDERS
 -- ============================================================
 
-create or replace view stale_leads as
+drop view if exists stale_leads;
+
+create view stale_leads as
 select
   l.*,
   s.name as stage_name,
