@@ -10,12 +10,12 @@ type AuthContext = {
   workspace: Workspace;
 };
 
-// proxy.ts already calls supabase.auth.getUser() and forwards the
+// proxy.ts already verifies the JWT via getClaims() and forwards the
 // verified id/email via trusted, client-unspoofable headers. Reuse that
-// instead of hitting Supabase Auth again on every request. Falls back to
-// a direct check if the headers are missing (e.g. a future proxy matcher
-// change) — never rely on Proxy alone for authentication.
-async function getVerifiedUser(
+// instead of verifying again on every request. Falls back to a direct
+// getClaims() check if the headers are missing (e.g. a future proxy
+// matcher change) — never rely on Proxy alone for authentication.
+export async function getVerifiedUser(
   supabase: SupabaseClient
 ): Promise<Pick<User, "id" | "email"> | null> {
   const hdrs = await headers();
@@ -24,10 +24,9 @@ async function getVerifiedUser(
     return { id: trustedId, email: hdrs.get("x-ltz-user-email") || undefined };
   }
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  return user;
+  const { data } = await supabase.auth.getClaims();
+  if (!data?.claims) return null;
+  return { id: data.claims.sub, email: data.claims.email };
 }
 
 export async function getAuthenticatedContext(): Promise<AuthContext | null> {

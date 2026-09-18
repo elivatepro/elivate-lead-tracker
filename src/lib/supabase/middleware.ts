@@ -25,9 +25,15 @@ export async function updateSession(request: NextRequest) {
     }
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims() verifies the JWT signature locally against a cached JWKS
+  // (this project uses asymmetric signing keys) instead of making a
+  // network round trip to Supabase Auth on every request like getUser()
+  // does. It also refreshes the session first if the token is close to
+  // expiring, same as getUser() would.
+  const { data: claimsData } = await supabase.auth.getClaims();
+  const user = claimsData?.claims
+    ? { id: claimsData.claims.sub, email: claimsData.claims.email }
+    : null;
 
   // Public routes that don't require auth
   const isPublicRoute =
@@ -60,9 +66,9 @@ export async function updateSession(request: NextRequest) {
 
   // Forward the identity we just verified to Server Functions/Route
   // Handlers via a trusted header, so getAuthenticatedContext() doesn't
-  // have to call Supabase Auth a second time. Strip any client-supplied
+  // have to verify the JWT a second time. Strip any client-supplied
   // value first so this can never be spoofed — it's always overwritten
-  // (or cleared) from our own fresh getUser() result above.
+  // (or cleared) from our own fresh getClaims() result above.
   const requestHeaders = new Headers(request.headers);
   requestHeaders.delete("x-ltz-user-id");
   requestHeaders.delete("x-ltz-user-email");
