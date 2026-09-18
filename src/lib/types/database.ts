@@ -343,8 +343,52 @@ export type Database = {
           owner_id: string;
         };
       };
+      leads_sla_state: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          stage_id: string;
+          name: string;
+          company: string | null;
+          email: string | null;
+          phone: string | null;
+          source: string | null;
+          value: number | null;
+          notes: string | null;
+          tags: string[];
+          last_activity_at: string;
+          snoozed_until: string | null;
+          reminder_sent_at: string | null;
+          closed_at: string | null;
+          archived_at: string | null;
+          created_at: string;
+          updated_at: string;
+          stages: {
+            name: string;
+            sla_days: number | null;
+            is_closed: boolean;
+            color: string | null;
+            position: number;
+          };
+          is_stale: boolean;
+        };
+      };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      get_dashboard_stats: {
+        Args: {
+          p_workspace_id: string;
+          p_required_fields: string[];
+        };
+        Returns: {
+          active_leads: number;
+          stale_leads: number;
+          incomplete_leads: number;
+          added_this_week: number;
+          pipeline_value: number;
+        }[];
+      };
+    };
     Enums: {
       activity_type:
         | "created"

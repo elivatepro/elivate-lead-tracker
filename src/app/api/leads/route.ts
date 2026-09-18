@@ -13,12 +13,15 @@ export async function GET(req: Request) {
   const search = searchParams.get("search");
   const tag = searchParams.get("tag");
   const archived = searchParams.get("archived");
+  const limit = Math.min(Number(searchParams.get("limit")) || 200, 500);
+  const offset = Math.max(Number(searchParams.get("offset")) || 0, 0);
 
   let query = ctx.supabase
-    .from("leads")
-    .select("*, stages!inner(name, sla_days, is_closed, color, position)")
+    .from("leads_sla_state")
+    .select("*")
     .eq("workspace_id", ctx.workspace.id)
-    .order("created_at", { ascending: false });
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
 
   if (archived === "true") {
     query = query.not("archived_at", "is", null);
@@ -26,6 +29,7 @@ export async function GET(req: Request) {
     query = query.is("archived_at", null);
   }
   if (stage) query = query.eq("stage_id", stage);
+  if (stale === "true") query = query.eq("is_stale", true);
   if (tag) query = query.contains("tags", [tag]);
   if (search)
     query = query.or(
@@ -36,20 +40,7 @@ export async function GET(req: Request) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  // Filter stale leads in JS (requires stage SLA calculation)
-  let leads = data ?? [];
-  if (stale === "true") {
-    const now = Date.now();
-    leads = leads.filter((lead) => {
-      const stage = lead.stages as unknown as { sla_days: number | null; is_closed: boolean };
-      if (stage.is_closed || !stage.sla_days) return false;
-      if (lead.snoozed_until && new Date(lead.snoozed_until).getTime() > now) return false;
-      const dueAt = new Date(lead.last_activity_at).getTime() + stage.sla_days * 86400000;
-      return now >= dueAt;
-    });
-  }
-
-  return NextResponse.json(leads);
+  return NextResponse.json(data ?? []);
 }
 
 // POST /api/leads — create a lead

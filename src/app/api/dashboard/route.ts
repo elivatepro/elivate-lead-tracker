@@ -7,60 +7,39 @@ export async function GET() {
   if (!ctx) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const wsId = ctx.workspace.id;
-
-  // Fetch all leads with stage info
-  const { data: leads } = await ctx.supabase
-    .from("leads")
-    .select("*, stages!inner(sla_days, is_closed)")
-    .eq("workspace_id", wsId);
-
-  const allLeads = leads ?? [];
-  const now = Date.now();
-  const weekAgo = now - 7 * 86400000;
-
-  const activeLeads = allLeads.filter(
-    (l) => !(l.stages as unknown as { is_closed: boolean }).is_closed
-  );
-
-  const staleLeads = activeLeads.filter((l) => {
-    const stage = l.stages as unknown as { sla_days: number | null; is_closed: boolean };
-    if (!stage.sla_days) return false;
-    if (l.snoozed_until && new Date(l.snoozed_until).getTime() > now) return false;
-    const dueAt = new Date(l.last_activity_at).getTime() + stage.sla_days * 86400000;
-    return now >= dueAt;
-  });
-
   const requiredFields = ctx.workspace.required_fields ?? ["name"];
-  const incompleteLeads = activeLeads.filter((l) => {
-    return requiredFields.some((field: string) => {
-      const val = l[field as keyof typeof l];
-      return val === null || val === undefined || val === "";
-    });
-  });
 
-  const addedThisWeek = allLeads.filter(
-    (l) => new Date(l.created_at).getTime() >= weekAgo
-  );
+  const [statsResult, activitiesResult] = await Promise.all([
+    ctx.supabase.rpc("get_dashboard_stats", {
+      p_workspace_id: wsId,
+      p_required_fields: requiredFields,
+    }),
+    ctx.supabase
+      .from("activities")
+      .select("*, leads(name)")
+      .eq("workspace_id", wsId)
+      .order("created_at", { ascending: false })
+      .limit(10),
+  ]);
 
-  const pipelineValue = activeLeads.reduce(
-    (sum, l) => sum + (Number(l.value) || 0),
-    0
-  );
+  if (statsResult.error) {
+    return NextResponse.json({ error: statsResult.error.message }, { status: 500 });
+  }
 
-  // Recent activities
-  const { data: activities } = await ctx.supabase
-    .from("activities")
-    .select("*, leads(name)")
-    .eq("workspace_id", wsId)
-    .order("created_at", { ascending: false })
-    .limit(10);
+  const stats = statsResult.data?.[0] ?? {
+    active_leads: 0,
+    stale_leads: 0,
+    incomplete_leads: 0,
+    added_this_week: 0,
+    pipeline_value: 0,
+  };
 
   return NextResponse.json({
-    activeLeads: activeLeads.length,
-    staleLeads: staleLeads.length,
-    incompleteLeads: incompleteLeads.length,
-    addedThisWeek: addedThisWeek.length,
-    pipelineValue,
-    recentActivities: activities ?? [],
+    activeLeads: stats.active_leads,
+    staleLeads: stats.stale_leads,
+    incompleteLeads: stats.incomplete_leads,
+    addedThisWeek: stats.added_this_week,
+    pipelineValue: stats.pipeline_value,
+    recentActivities: activitiesResult.data ?? [],
   });
 }
