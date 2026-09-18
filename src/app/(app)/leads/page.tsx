@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -29,6 +29,18 @@ const DENSITY_OPTIONS: { key: LeadCardDensity; label: string }[] = [
 ];
 
 const DENSITY_KEY = "leadtracker.board.density";
+const COLLAPSED_KEY = "leadtracker.board.collapsed";
+const NO_LEADS: LeadWithStage[] = [];
+
+function loadCollapsed(): Set<string> {
+  if (typeof window === "undefined") return new Set();
+  try {
+    const parsed: unknown = JSON.parse(window.localStorage.getItem(COLLAPSED_KEY) ?? "[]");
+    return new Set(Array.isArray(parsed) ? parsed.filter((id) => typeof id === "string") : []);
+  } catch {
+    return new Set();
+  }
+}
 
 export default function BoardPage() {
   const { data: leads = [], isLoading: leadsLoading } = useLeads();
@@ -47,6 +59,25 @@ export default function BoardPage() {
     setDensity(next);
     window.localStorage.setItem(DENSITY_KEY, next);
   }
+
+  const [collapsed, setCollapsed] = useState<Set<string>>(loadCollapsed);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...collapsed]));
+    } catch {
+      // storage unavailable — collapse state just won't persist
+    }
+  }, [collapsed]);
+
+  const toggleCollapsed = useCallback((stageId: string) => {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      if (next.has(stageId)) next.delete(stageId);
+      else next.add(stageId);
+      return next;
+    });
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -155,13 +186,15 @@ export default function BoardPage() {
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
             >
-              <div className="flex min-w-max gap-4 overflow-x-auto pb-2">
+              <div className="flex gap-4 overflow-x-auto pb-2">
                 {stages.map((stage) => (
                   <StageColumn
                     key={stage.id}
                     stage={stage}
-                    leads={leadsByStage[stage.id] ?? []}
+                    leads={leadsByStage[stage.id] ?? NO_LEADS}
                     density={density}
+                    collapsed={collapsed.has(stage.id)}
+                    onToggleCollapse={toggleCollapsed}
                   />
                 ))}
               </div>

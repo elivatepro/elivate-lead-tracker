@@ -1,6 +1,7 @@
 "use client";
 
 import { memo } from "react";
+import { ChevronsLeft, ChevronsRight } from "lucide-react";
 import { useDroppable } from "@dnd-kit/core";
 import { useDraggable } from "@dnd-kit/core";
 import { LeadCard, type LeadCardDensity } from "./lead-card";
@@ -36,24 +37,64 @@ function DraggableLeadCard({
   );
 }
 
+const COLUMN_MAX_HEIGHT = "max-h-[calc(100dvh-18rem)] min-h-[18rem]";
+
 export const StageColumn = memo(function StageColumn({
   stage,
   leads,
   density = "rich",
+  collapsed = false,
+  onToggleCollapse,
 }: {
   stage: Stage;
   leads: LeadWithStage[];
   density?: LeadCardDensity;
+  collapsed?: boolean;
+  onToggleCollapse?: (stageId: string) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage.id });
   const columnWidth =
     density === "compact" ? "w-[260px]" : density === "comfortable" ? "w-[280px]" : "w-[310px]";
   const gap = density === "compact" ? "space-y-1.5" : "space-y-2.5";
+  const dotColor = stage.color || "#c4960a";
+
+  if (collapsed) {
+    return (
+      <div
+        ref={setNodeRef}
+        className={`flex w-[52px] shrink-0 flex-col items-center gap-3 rounded-[3px] border px-1.5 py-2.5 transition-colors ${COLUMN_MAX_HEIGHT} ${
+          isOver
+            ? "border-ember/40 bg-ember-tint/30"
+            : "border-line bg-paper-2/40"
+        }`}
+      >
+        <button
+          type="button"
+          onClick={() => onToggleCollapse?.(stage.id)}
+          aria-label={`Expand ${stage.name}`}
+          title={`Expand ${stage.name}`}
+          className="rounded-[3px] p-1 text-ink-4 transition-colors hover:bg-paper-2 hover:text-ink"
+        >
+          <ChevronsRight className="h-4 w-4" />
+        </button>
+        <span className="numeric min-w-[20px] rounded-[2px] bg-paper-2 px-1.5 py-0.5 text-center text-[10px] font-medium text-ink-3">
+          {leads.length}
+        </span>
+        <div
+          className="h-2 w-2 shrink-0 rounded-[1px]"
+          style={{ backgroundColor: dotColor }}
+        />
+        <span className="text-[13px] font-semibold tracking-tight text-ink [writing-mode:vertical-rl]">
+          {stage.name}
+        </span>
+      </div>
+    );
+  }
 
   return (
     <div
       ref={setNodeRef}
-      className={`flex ${columnWidth} shrink-0 flex-col rounded-[3px] border p-2.5 transition-colors ${
+      className={`flex ${columnWidth} shrink-0 flex-col rounded-[3px] border p-2.5 transition-colors ${COLUMN_MAX_HEIGHT} ${
         isOver
           ? "border-ember/40 bg-ember-tint/30"
           : "border-line bg-paper-2/40"
@@ -63,7 +104,7 @@ export const StageColumn = memo(function StageColumn({
         <div className="flex items-center gap-2">
           <div
             className="h-2 w-2 rounded-[1px]"
-            style={{ backgroundColor: stage.color || "#c4960a" }}
+            style={{ backgroundColor: dotColor }}
           />
           <span className="text-[13px] font-semibold tracking-tight text-ink">
             {stage.name}
@@ -72,12 +113,23 @@ export const StageColumn = memo(function StageColumn({
             {leads.length}
           </span>
         </div>
-        <span className="numeric text-[10.5px] text-ink-4">
-          {stage.is_closed ? "Closed" : stage.sla_days ? `${stage.sla_days}d SLA` : "Open"}
-        </span>
+        <div className="flex items-center gap-1.5">
+          <span className="numeric text-[10.5px] text-ink-4">
+            {stage.is_closed ? "Closed" : stage.sla_days ? `${stage.sla_days}d SLA` : "Open"}
+          </span>
+          <button
+            type="button"
+            onClick={() => onToggleCollapse?.(stage.id)}
+            aria-label={`Collapse ${stage.name}`}
+            title={`Collapse ${stage.name}`}
+            className="rounded-[3px] p-1 text-ink-4 transition-colors hover:bg-paper-2 hover:text-ink"
+          >
+            <ChevronsLeft className="h-3.5 w-3.5" />
+          </button>
+        </div>
       </div>
 
-      <div className={`mt-2.5 flex-1 ${gap} overflow-y-auto px-0.5 pb-1`}>
+      <div className={`mt-2.5 min-h-0 flex-1 ${gap} overflow-y-auto px-0.5 pb-1`}>
         {leads.map((lead) => (
           <DraggableLeadCard key={lead.id} lead={lead} density={density} />
         ))}
