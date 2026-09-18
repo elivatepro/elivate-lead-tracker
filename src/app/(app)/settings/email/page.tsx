@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { SuppressionList } from "@/components/settings/suppression-list";
 import {
   Dialog,
   DialogClose,
@@ -27,6 +28,10 @@ type EmailSettings = {
   email_signature: string;
   email_batch_size: number;
   email_batch_delay: number;
+  email_hourly_cap: number;
+  email_daily_cap: number;
+  email_footer_address: string;
+  email_reply_to: string;
   to_email: string;
 };
 
@@ -42,6 +47,10 @@ export default function EmailSettingsPage() {
   const [signature, setSignature] = useState("");
   const [batchSize, setBatchSize] = useState("10");
   const [batchDelay, setBatchDelay] = useState("5");
+  const [hourlyCap, setHourlyCap] = useState("20");
+  const [dailyCap, setDailyCap] = useState("100");
+  const [footerAddress, setFooterAddress] = useState("");
+  const [replyTo, setReplyTo] = useState("");
   const [hasPassword, setHasPassword] = useState(false);
   const [testOpen, setTestOpen] = useState(false);
   const [testEmail, setTestEmail] = useState("");
@@ -57,6 +66,10 @@ export default function EmailSettingsPage() {
         setSignature(data.email_signature ?? "");
         setBatchSize(String(data.email_batch_size ?? 10));
         setBatchDelay(String(data.email_batch_delay ?? 5));
+        setHourlyCap(String(data.email_hourly_cap ?? 20));
+        setDailyCap(String(data.email_daily_cap ?? 100));
+        setFooterAddress(data.email_footer_address ?? "");
+        setReplyTo(data.email_reply_to ?? "");
         setHasPassword(data.has_password);
         setTestEmail(data.to_email ?? "");
       })
@@ -73,6 +86,10 @@ export default function EmailSettingsPage() {
       email_signature: signature,
       email_batch_size: Number(batchSize),
       email_batch_delay: Number(batchDelay),
+      email_hourly_cap: Number(hourlyCap),
+      email_daily_cap: Number(dailyCap),
+      email_footer_address: footerAddress,
+      email_reply_to: replyTo,
     };
     if (password) payload.smtp_password = password;
 
@@ -210,13 +227,42 @@ if (res.ok) {
       <Card className="rounded-[4px] border-border/70 bg-card/80">
         <CardHeader>
           <CardTitle className="font-serif text-2xl tracking-[-0.03em]">
-            Bulk sending
+            Sending limits
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Bulk sends are queued and sent gradually from your own mailbox. Keep
+            these low: mailbox providers throttle or flag accounts that send
+            too fast (a free Gmail account allows roughly 500 a day).
+          </p>
           <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
-              <Label>Batch size</Label>
+              <Label>Max emails per hour</Label>
+              <Input
+                value={hourlyCap}
+                onChange={(e) => setHourlyCap(e.target.value)}
+                type="number"
+                min={1}
+                max={500}
+                className="h-11 rounded-[3px]"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Max emails per day</Label>
+              <Input
+                value={dailyCap}
+                onChange={(e) => setDailyCap(e.target.value)}
+                type="number"
+                min={1}
+                max={2000}
+                className="h-11 rounded-[3px]"
+              />
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Max per send run</Label>
               <Input
                 value={batchSize}
                 onChange={(e) => setBatchSize(e.target.value)}
@@ -227,7 +273,7 @@ if (res.ok) {
               />
             </div>
             <div className="space-y-2">
-              <Label>Minutes between sends</Label>
+              <Label>Minutes between leads in a bulk send</Label>
               <Input
                 value={batchDelay}
                 onChange={(e) => setBatchDelay(e.target.value)}
@@ -240,6 +286,44 @@ if (res.ok) {
           </div>
         </CardContent>
       </Card>
+
+      <Card className="rounded-[4px] border-border/70 bg-card/80">
+        <CardHeader>
+          <CardTitle className="font-serif text-2xl tracking-[-0.03em]">
+            Compliance
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            Every email includes an unsubscribe link automatically. Many
+            countries also require a postal address in commercial email; it&apos;s
+            added to the footer, and required before you can publish an
+            automation.
+          </p>
+          <div className="space-y-2">
+            <Label>Postal address</Label>
+            <Textarea
+              value={footerAddress}
+              onChange={(e) => setFooterAddress(e.target.value)}
+              rows={3}
+              placeholder={"Acme Consulting\n12 Example Street\nCity, Country"}
+              className="rounded-[3px]"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label>Reply-to address (optional)</Label>
+            <Input
+              value={replyTo}
+              onChange={(e) => setReplyTo(e.target.value)}
+              type="email"
+              placeholder="Where replies should go, if not your SMTP address"
+              className="h-11 rounded-[3px]"
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <SuppressionList />
 
       <Card className="rounded-[4px] border-border/70 bg-card/80">
         <CardHeader>

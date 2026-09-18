@@ -32,6 +32,11 @@ export type Database = {
           email_signature: string | null;
           email_batch_size: number;
           email_batch_delay: number;
+          email_hourly_cap: number;
+          email_daily_cap: number;
+          email_footer_address: string | null;
+          email_reply_to: string | null;
+          automations_enabled: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -57,6 +62,11 @@ export type Database = {
           email_signature?: string | null;
           email_batch_size?: number;
           email_batch_delay?: number;
+          email_hourly_cap?: number;
+          email_daily_cap?: number;
+          email_footer_address?: string | null;
+          email_reply_to?: string | null;
+          automations_enabled?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -82,6 +92,11 @@ export type Database = {
           email_signature?: string | null;
           email_batch_size?: number;
           email_batch_delay?: number;
+          email_hourly_cap?: number;
+          email_daily_cap?: number;
+          email_footer_address?: string | null;
+          email_reply_to?: string | null;
+          automations_enabled?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -189,11 +204,18 @@ export type Database = {
           to_email: string;
           subject: string;
           body_html: string | null;
+          body_text: string | null;
           scheduled_for: string;
           status: string;
           error: string | null;
           sent_at: string | null;
           created_at: string;
+          attempts: number;
+          claimed_at: string | null;
+          source: string;
+          enrollment_id: string | null;
+          node_id: string | null;
+          idempotency_key: string | null;
         };
         Insert: {
           id?: string;
@@ -204,11 +226,18 @@ export type Database = {
           to_email: string;
           subject: string;
           body_html?: string | null;
+          body_text?: string | null;
           scheduled_for?: string;
           status?: string;
           error?: string | null;
           sent_at?: string | null;
           created_at?: string;
+          attempts?: number;
+          claimed_at?: string | null;
+          source?: string;
+          enrollment_id?: string | null;
+          node_id?: string | null;
+          idempotency_key?: string | null;
         };
         Update: {
           id?: string;
@@ -219,11 +248,18 @@ export type Database = {
           to_email?: string;
           subject?: string;
           body_html?: string | null;
+          body_text?: string | null;
           scheduled_for?: string;
           status?: string;
           error?: string | null;
           sent_at?: string | null;
           created_at?: string;
+          attempts?: number;
+          claimed_at?: string | null;
+          source?: string;
+          enrollment_id?: string | null;
+          node_id?: string | null;
+          idempotency_key?: string | null;
         };
       };
       email_log: {
@@ -236,6 +272,9 @@ export type Database = {
           status: string;
           error: string | null;
           sent_at: string;
+          source: string | null;
+          enrollment_id: string | null;
+          message_id: string | null;
         };
         Insert: {
           id?: string;
@@ -246,6 +285,9 @@ export type Database = {
           status?: string;
           error?: string | null;
           sent_at?: string;
+          source?: string | null;
+          enrollment_id?: string | null;
+          message_id?: string | null;
         };
         Update: {
           id?: string;
@@ -256,6 +298,32 @@ export type Database = {
           status?: string;
           error?: string | null;
           sent_at?: string;
+          source?: string | null;
+          enrollment_id?: string | null;
+          message_id?: string | null;
+        };
+      };
+      email_suppressions: {
+        Row: {
+          id: string;
+          workspace_id: string;
+          email: string;
+          reason: "unsubscribe" | "bounce" | "manual";
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          workspace_id: string;
+          email: string;
+          reason: "unsubscribe" | "bounce" | "manual";
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          workspace_id?: string;
+          email?: string;
+          reason?: "unsubscribe" | "bounce" | "manual";
+          created_at?: string;
         };
       };
       activities: {
@@ -375,6 +443,28 @@ export type Database = {
       };
     };
     Functions: {
+      claim_email_queue: {
+        Args: { p_workspace_id: string; p_limit: number };
+        Returns: Database["public"]["Tables"]["email_queue"]["Row"][];
+      };
+      email_queue_finalize: {
+        Args: {
+          p_id: string;
+          p_outcome: "sent" | "failed" | "skipped" | "retry" | "release";
+          p_error?: string | null;
+          p_message_id?: string | null;
+          p_retry_seconds?: number;
+        };
+        Returns: string;
+      };
+      suppress_email: {
+        Args: {
+          p_workspace_id: string;
+          p_email: string;
+          p_reason: "unsubscribe" | "bounce" | "manual";
+        };
+        Returns: undefined;
+      };
       get_dashboard_stats: {
         Args: {
           p_workspace_id: string;
@@ -400,7 +490,8 @@ export type Database = {
         | "closed"
         | "email_sent"
         | "archived"
-        | "restored";
+        | "restored"
+        | "unsubscribed";
     };
   };
 };

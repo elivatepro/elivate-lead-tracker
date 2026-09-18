@@ -1,13 +1,13 @@
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
+import { isAuthorizedCron } from "@/lib/cron-auth";
 import { signSnoozeToken } from "@/lib/snooze-token";
 import ReminderEmail, { type StaleLead } from "@/emails/ReminderEmail";
 import { computeStaleLeads } from "@/lib/nov/stale";
 
 export async function GET(req: Request) {
   // Authenticate — only Vercel Cron (or manual calls with the secret) allowed
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!isAuthorizedCron(req)) {
     return new Response("Unauthorized", { status: 401 });
   }
 

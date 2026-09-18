@@ -42,6 +42,8 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/forgot-password") ||
     request.nextUrl.pathname.startsWith("/reset-password") ||
     request.nextUrl.pathname.startsWith("/snooze") ||
+    request.nextUrl.pathname.startsWith("/unsubscribe") ||
+    request.nextUrl.pathname.startsWith("/api/unsubscribe") ||
     request.nextUrl.pathname.startsWith("/api/cron") ||
     request.nextUrl.pathname.startsWith("/auth/callback");
 

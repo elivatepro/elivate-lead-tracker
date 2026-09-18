@@ -56,7 +56,13 @@ export function EmailComposeDialog({
         }),
       });
       const data = (await res.json().catch(() => null)) as
-        | { queued?: number; skipped?: number; error?: string }
+        | {
+            queued?: number;
+            skipped?: number;
+            suppressed?: number;
+            warning?: string;
+            error?: string;
+          }
         | null;
 
       if (!res.ok) {
@@ -67,6 +73,12 @@ export function EmailComposeDialog({
       toast.success(
         `${data?.queued ?? 0} email${data?.queued === 1 ? "" : "s"} queued`
       );
+      if (data?.suppressed) {
+        toast.info(
+          `${data.suppressed} address${data.suppressed === 1 ? " was" : "es were"} skipped because they unsubscribed`
+        );
+      }
+      if (data?.warning) toast.warning(data.warning);
       setSubject("");
       setBody("");
       onOpenChange(false);

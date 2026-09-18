@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedContext } from "@/lib/supabase/queries";
 import { encryptSecret } from "@/lib/email/encrypt";
+import { isValidEmail } from "@/lib/email/recipients";
 
 // GET /api/email-settings — current SMTP configuration (password never returned)
 export async function GET() {
@@ -10,7 +11,7 @@ export async function GET() {
   const { data } = await ctx.supabase
     .from("workspaces")
     .select(
-      "smtp_host, smtp_port, smtp_user, smtp_pass_encrypted, email_from_name, email_signature, email_batch_size, email_batch_delay"
+      "smtp_host, smtp_port, smtp_user, smtp_pass_encrypted, email_from_name, email_signature, email_batch_size, email_batch_delay, email_hourly_cap, email_daily_cap, email_footer_address, email_reply_to"
     )
     .eq("id", ctx.workspace.id)
     .single();
@@ -26,6 +27,10 @@ export async function GET() {
     email_signature: data.email_signature ?? "",
     email_batch_size: data.email_batch_size,
     email_batch_delay: data.email_batch_delay,
+    email_hourly_cap: data.email_hourly_cap,
+    email_daily_cap: data.email_daily_cap,
+    email_footer_address: data.email_footer_address ?? "",
+    email_reply_to: data.email_reply_to ?? "",
     to_email: ctx.user.email ?? "",
   });
 }
@@ -83,6 +88,35 @@ export async function PUT(req: Request) {
       return NextResponse.json({ error: "Delay must be between 1 and 1440 minutes" }, { status: 400 });
     }
     updates.email_batch_delay = delay;
+  }
+
+  if ("email_hourly_cap" in body) {
+    const cap = Number(body.email_hourly_cap);
+    if (!Number.isInteger(cap) || cap < 1 || cap > 500) {
+      return NextResponse.json({ error: "Hourly limit must be between 1 and 500" }, { status: 400 });
+    }
+    updates.email_hourly_cap = cap;
+  }
+  if ("email_daily_cap" in body) {
+    const cap = Number(body.email_daily_cap);
+    if (!Number.isInteger(cap) || cap < 1 || cap > 2000) {
+      return NextResponse.json({ error: "Daily limit must be between 1 and 2000" }, { status: 400 });
+    }
+    updates.email_daily_cap = cap;
+  }
+  if ("email_footer_address" in body) {
+    const address = typeof body.email_footer_address === "string" ? body.email_footer_address.trim() : "";
+    if (address.length > 500) {
+      return NextResponse.json({ error: "Postal address is too long (max 500 characters)" }, { status: 400 });
+    }
+    updates.email_footer_address = address || null;
+  }
+  if ("email_reply_to" in body) {
+    const replyTo = typeof body.email_reply_to === "string" ? body.email_reply_to.trim() : "";
+    if (replyTo && !isValidEmail(replyTo)) {
+      return NextResponse.json({ error: "Reply-to must be a valid email address" }, { status: 400 });
+    }
+    updates.email_reply_to = replyTo || null;
   }
 
   const { error } = await ctx.supabase

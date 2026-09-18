@@ -38,19 +38,29 @@ export async function sendEmail({
   subject,
   html,
 }: SendArgs): Promise<void> {
+  // Same connection rules as the queue's pooled transport, so a passing
+  // "Test settings" means real sends will connect the same way.
   const transporter = nodemailer.createTransport({
     host,
     port,
     secure: port === 465,
+    requireTLS: port !== 465,
+    connectionTimeout: 15_000,
+    greetingTimeout: 15_000,
+    socketTimeout: 30_000,
     auth: { user, pass },
   });
 
-  await transporter.sendMail({
-    from,
-    to,
-    subject,
-    html,
-  });
+  try {
+    await transporter.sendMail({
+      from,
+      to,
+      subject,
+      html,
+    });
+  } finally {
+    transporter.close();
+  }
 }
 
 export function describeSmtpError(

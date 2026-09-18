@@ -15,6 +15,12 @@ async function renderSignature(text: string): Promise<string> {
   });
 }
 
+export function buildEmailText(body: string, signature?: string | null): string {
+  const text = body.replace(/\r\n/g, "\n").trim();
+  const sig = signature?.trim();
+  return sig ? `${text}\n\n-- \n${sig}\n` : `${text}\n`;
+}
+
 export async function buildEmailHtml(
   body: string,
   signature?: string | null
