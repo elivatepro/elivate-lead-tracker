@@ -9,7 +9,8 @@ export async function GET() {
   const { data, error } = await ctx.supabase
     .from("leads")
     .select("tags")
-    .eq("workspace_id", ctx.workspace.id);
+    .eq("workspace_id", ctx.workspace.id)
+    .is("archived_at", null);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 

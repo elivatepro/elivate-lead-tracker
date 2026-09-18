@@ -196,6 +196,7 @@ async function listLeads(args: z.infer<typeof listLeadsSchema>, ctx: NovToolCont
     .from("leads")
     .select("id, name, company, email, value, last_activity_at, created_at, stage_id, stages!inner(name, sla_days, is_closed, color, position)")
     .eq("workspace_id", ctx.workspace.id)
+    .is("archived_at", null)
     .limit(args.limit ?? 10)
     .order(args.order_by ?? "last_activity_at", {
       ascending: (args.direction ?? "desc") === "asc",
@@ -223,6 +224,7 @@ async function searchLeads(args: z.infer<typeof searchLeadsSchema>, ctx: NovTool
     .from("leads")
     .select("id, name, company, email, phone, value, last_activity_at, stage_id, stages!inner(name, sla_days, is_closed, color, position)")
     .eq("workspace_id", ctx.workspace.id)
+    .is("archived_at", null)
     .order("last_activity_at", { ascending: false })
     .limit(100);
 
@@ -274,7 +276,8 @@ async function getPipelineSummary(ctx: NovToolContext) {
   const { data: leads, error } = await ctx.supabase
     .from("leads")
     .select("id, name, company, value, stage_id, created_at, last_activity_at, email, phone, notes, stages!inner(name, sla_days, is_closed, color, position)")
-    .eq("workspace_id", ctx.workspace.id);
+    .eq("workspace_id", ctx.workspace.id)
+    .is("archived_at", null);
 
   if (error) throw error;
 

@@ -43,6 +43,7 @@ export async function computeStaleLeads(
     .select(
       "*, stages!inner(name, sla_days, is_closed, color, position), workspaces!inner(owner_id)"
     )
+    .is("archived_at", null)
     .order("last_activity_at", { ascending: true });
 
   if (opts.workspaceId) {
