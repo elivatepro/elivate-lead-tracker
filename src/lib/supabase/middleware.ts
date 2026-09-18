@@ -58,5 +58,25 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  return supabaseResponse;
+  // Forward the identity we just verified to Server Functions/Route
+  // Handlers via a trusted header, so getAuthenticatedContext() doesn't
+  // have to call Supabase Auth a second time. Strip any client-supplied
+  // value first so this can never be spoofed — it's always overwritten
+  // (or cleared) from our own fresh getUser() result above.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.delete("x-ltz-user-id");
+  requestHeaders.delete("x-ltz-user-email");
+  if (user) {
+    requestHeaders.set("x-ltz-user-id", user.id);
+    requestHeaders.set("x-ltz-user-email", user.email ?? "");
+  }
+
+  const finalResponse = NextResponse.next({
+    request: { headers: requestHeaders },
+  });
+  supabaseResponse.cookies.getAll().forEach((cookie) => {
+    finalResponse.cookies.set(cookie);
+  });
+
+  return finalResponse;
 }

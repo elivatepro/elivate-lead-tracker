@@ -53,7 +53,7 @@ type PipelineLead = {
 
 export type NovToolContext = {
   supabase: TypedSupabase;
-  user: User;
+  user: Pick<User, "id" | "email">;
   workspace: Workspace;
 };
 
