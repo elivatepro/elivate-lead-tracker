@@ -3,12 +3,15 @@
 import { Suspense, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { Archive, ArchiveRestore, Search, Send, Trash2, X } from "lucide-react";
+import { runWithConcurrency } from "@/lib/concurrency";
 import { Header } from "@/components/layout/header";
 import { LeadViewNav } from "@/components/layout/lead-view-nav";
 import { useLeads, useUpdateLead } from "@/hooks/use-leads";
 import { useStages } from "@/hooks/use-stages";
 import { useTags } from "@/hooks/use-tags";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
 import { NewLeadDialog } from "@/components/leads/new-lead-dialog";
 import { ImportLeadsDialog } from "@/components/leads/import-leads-dialog";
 import { EmailComposeDialog } from "@/components/emails/email-compose-dialog";
@@ -48,9 +51,10 @@ function ListPageContent() {
   const updateLead = useUpdateLead();
   const { openLead } = useLeadDetail();
   const search = searchDraft ?? searchParams.get("q") ?? "";
+  const debouncedSearch = useDebouncedValue(search, 350);
 
   const { data: leads = [], isLoading } = useLeads({
-    search: search || undefined,
+    search: debouncedSearch || undefined,
     stage: stageFilter || undefined,
     archived: archivedView || undefined,
   });
@@ -86,15 +90,23 @@ function ListPageContent() {
     setSelected(next);
   }
 
-  async function bulkArchive() {
-    if (!confirm(`Archive ${selectedCount} lead${selectedCount > 1 ? "s" : ""}?`)) return;
+  const BULK_CONCURRENCY = 8;
 
-    for (const id of selected) {
-      await fetch(`/api/leads/${id}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ archived_at: new Date().toISOString() }),
-      });
+  async function runBulk(
+    actionLabel: string,
+    ids: string[],
+    fn: (id: string) => Promise<Response>
+  ) {
+    const results = await runWithConcurrency(ids, BULK_CONCURRENCY, async (id) => {
+      const res = await fn(id);
+      if (!res.ok) throw new Error(`Failed for ${id}`);
+      return res;
+    });
+
+    const failed = results.filter((r) => !r.ok).length;
+    const succeeded = results.length - failed;
+    if (failed > 0) {
+      toast.error(`${actionLabel}: ${succeeded}/${results.length} succeeded, ${failed} failed`);
     }
 
     setSelected(new Set());
@@ -102,44 +114,44 @@ function ListPageContent() {
     queryClient.invalidateQueries({ queryKey: ["dashboard"] });
   }
 
+  async function bulkArchive() {
+    if (!confirm(`Archive ${selectedCount} lead${selectedCount > 1 ? "s" : ""}?`)) return;
+
+    await runBulk("Archive", [...selected], (id) =>
+      fetch(`/api/leads/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ archived_at: new Date().toISOString() }),
+      })
+    );
+  }
+
   async function bulkRestore() {
-    for (const id of selected) {
-      await fetch(`/api/leads/${id}`, {
+    await runBulk("Restore", [...selected], (id) =>
+      fetch(`/api/leads/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ archived_at: null }),
-      });
-    }
-
-    setSelected(new Set());
-    queryClient.invalidateQueries({ queryKey: ["leads"] });
-    queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      })
+    );
   }
 
   async function bulkPermanentDelete() {
     if (!confirm(`Delete ${selectedCount} lead${selectedCount > 1 ? "s" : ""} permanently?`)) return;
 
-    for (const id of selected) {
-      await fetch(`/api/leads/${id}`, { method: "DELETE" });
-    }
-
-    setSelected(new Set());
-    queryClient.invalidateQueries({ queryKey: ["leads"] });
-    queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+    await runBulk("Delete", [...selected], (id) =>
+      fetch(`/api/leads/${id}`, { method: "DELETE" })
+    );
   }
 
   async function bulkChangeStage(stageId: string) {
-    for (const id of selected) {
-      await fetch(`/api/leads/${id}`, {
+    await runBulk("Move stage", [...selected], (id) =>
+      fetch(`/api/leads/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stage_id: stageId }),
-      });
-    }
-
-    setSelected(new Set());
-    queryClient.invalidateQueries({ queryKey: ["leads"] });
-    queryClient.invalidateQueries({ queryKey: ["dashboard"] });
+      })
+    );
   }
 
   return (
