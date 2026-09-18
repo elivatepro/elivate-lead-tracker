@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { ArrowUpRight, Building2, Clock3, Mail } from "lucide-react";
 import type { LeadWithStage } from "@/hooks/use-leads";
 import { buildMailtoHref, splitContactValues } from "@/lib/contacts";
@@ -13,7 +14,7 @@ import { useLeadDetail } from "./lead-detail-viewer";
 
 export type LeadCardDensity = "compact" | "comfortable" | "rich";
 
-export function LeadCard({
+export const LeadCard = memo(function LeadCard({
   lead,
   density = "rich",
 }: {
@@ -23,7 +24,7 @@ export function LeadCard({
   if (density === "compact") return <CompactCard lead={lead} />;
   if (density === "comfortable") return <ComfortableCard lead={lead} />;
   return <RichCard lead={lead} />;
-}
+});
 
 function statusClasses(tone: ReturnType<typeof getLeadSlaState>["tone"]) {
   if (tone === "danger") return "text-stale";

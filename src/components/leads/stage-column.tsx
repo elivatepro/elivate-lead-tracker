@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { useDraggable } from "@dnd-kit/core";
 import { LeadCard, type LeadCardDensity } from "./lead-card";
@@ -35,7 +36,7 @@ function DraggableLeadCard({
   );
 }
 
-export function StageColumn({
+export const StageColumn = memo(function StageColumn({
   stage,
   leads,
   density = "rich",
@@ -90,4 +91,4 @@ export function StageColumn({
       </div>
     </div>
   );
-}
+});

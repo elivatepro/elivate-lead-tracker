@@ -20,7 +20,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import * as XLSX from "xlsx";
 
 const LEAD_FIELDS: readonly { key: string; label: string; required?: boolean }[] = [
   { key: "name", label: "Name", required: true },
@@ -95,6 +94,7 @@ export function ImportLeadsDialog() {
     }
 
     const buffer = await f.arrayBuffer();
+    const XLSX = await import("xlsx");
     const workbook = XLSX.read(buffer, { type: "array" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
     const rows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(sheet);
