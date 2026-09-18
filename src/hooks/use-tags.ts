@@ -1,10 +1,10 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, queryOptions } from "@tanstack/react-query";
 
-export function useTags() {
-  return useQuery({
-    queryKey: ["tags"],
+export function tagsQueryOptions() {
+  return queryOptions({
+    queryKey: ["tags"] as const,
     queryFn: async () => {
       const res = await fetch("/api/tags");
       if (!res.ok) throw new Error("Failed to load tags");
@@ -13,4 +13,8 @@ export function useTags() {
     },
     staleTime: 60_000,
   });
+}
+
+export function useTags() {
+  return useQuery(tagsQueryOptions());
 }

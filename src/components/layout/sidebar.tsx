@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { signOut } from "@/app/(app)/actions";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { useNavPrefetch } from "@/lib/nav-prefetch";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -32,6 +33,7 @@ const navItems = [
 
 export function Sidebar({ userEmail }: { userEmail: string }) {
   const pathname = usePathname();
+  const prefetch = useNavPrefetch();
 
   return (
     <aside className="flex h-full w-[220px] flex-col border-r border-line bg-paper px-2.5 py-3">
@@ -55,6 +57,8 @@ export function Sidebar({ userEmail }: { userEmail: string }) {
             <Link
               key={item.href}
               href={item.href}
+              onMouseEnter={() => prefetch(item.href)}
+              onFocus={() => prefetch(item.href)}
               className={`flex items-center gap-2.5 rounded-[3px] px-2.5 py-[7px] text-[13px] transition-colors ${
                 isActive
                   ? "bg-ink text-paper"

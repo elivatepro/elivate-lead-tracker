@@ -4,6 +4,7 @@ import {
   useQuery,
   useMutation,
   useQueryClient,
+  queryOptions,
   keepPreviousData,
   type QueryKey,
 } from "@tanstack/react-query";
@@ -40,27 +41,44 @@ type OptimisticContext = {
   previous: [QueryKey, LeadWithStage[] | undefined][];
 };
 
-export function useLeads(filters?: {
+export type LeadsFilters = {
   stage?: string;
   stale?: boolean;
   search?: string;
   archived?: boolean;
-}) {
-  const params = new URLSearchParams();
-  if (filters?.stage) params.set("stage", filters.stage);
-  if (filters?.stale) params.set("stale", "true");
-  if (filters?.search) params.set("search", filters.search);
-  if (filters?.archived) params.set("archived", "true");
+};
 
-  return useQuery<LeadWithStage[]>({
-    queryKey: ["leads", filters],
+// Normalize so callers that pass no filters, `{}`, or an object of all-falsy
+// values all resolve to the same query key — otherwise pages that fetch the
+// same unfiltered lead list (dashboard, today, board) would each hold a
+// separate cache entry instead of sharing one.
+export function leadsQueryOptions(filters?: LeadsFilters) {
+  const normalized = {
+    stage: filters?.stage || undefined,
+    stale: filters?.stale || undefined,
+    search: filters?.search || undefined,
+    archived: filters?.archived || undefined,
+  };
+
+  const params = new URLSearchParams();
+  if (normalized.stage) params.set("stage", normalized.stage);
+  if (normalized.stale) params.set("stale", "true");
+  if (normalized.search) params.set("search", normalized.search);
+  if (normalized.archived) params.set("archived", "true");
+
+  return queryOptions({
+    queryKey: ["leads", normalized] as const,
     queryFn: async () => {
       const res = await fetch(`/api/leads?${params}`);
       if (!res.ok) throw new Error("Failed to fetch leads");
-      return res.json();
+      return res.json() as Promise<LeadWithStage[]>;
     },
     placeholderData: keepPreviousData,
   });
+}
+
+export function useLeads(filters?: LeadsFilters) {
+  return useQuery(leadsQueryOptions(filters));
 }
 
 function snapshotLeadLists(queryClient: ReturnType<typeof useQueryClient>) {

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LayoutGrid, Rows3, Triangle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useNavPrefetch } from "@/lib/nav-prefetch";
 
 const items = [
   { href: "/leads", label: "Pipeline", icon: LayoutGrid },
@@ -13,6 +14,7 @@ const items = [
 
 export function LeadViewNav() {
   const pathname = usePathname();
+  const prefetch = useNavPrefetch();
 
   return (
     <div className="inline-flex rounded-[3px] border border-line bg-card p-0.5">
@@ -26,6 +28,8 @@ export function LeadViewNav() {
           <Link
             key={item.href}
             href={item.href}
+            onMouseEnter={() => prefetch(item.href)}
+            onFocus={() => prefetch(item.href)}
             className={cn(
               "inline-flex items-center gap-1.5 rounded-[2px] px-3 py-1.5 text-[12.5px] font-medium transition-colors",
               active

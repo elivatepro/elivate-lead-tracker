@@ -1,30 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import { Header } from "@/components/layout/header";
 import { NewLeadDialog } from "@/components/leads/new-lead-dialog";
 import { ImportLeadsDialog } from "@/components/leads/import-leads-dialog";
 import { useLeads } from "@/hooks/use-leads";
+import { useDashboard } from "@/hooks/use-dashboard";
 import { formatCompactCurrency, getLeadSlaState } from "@/lib/lead-utils";
 
-type DashboardData = {
-  activeLeads: number;
-  staleLeads: number;
-  incompleteLeads: number;
-  addedThisWeek: number;
-  pipelineValue: number;
-};
-
 export default function DashboardPage() {
-  const { data, isLoading } = useQuery<DashboardData>({
-    queryKey: ["dashboard"],
-    queryFn: async () => {
-      const res = await fetch("/api/dashboard");
-      if (!res.ok) throw new Error("Failed to fetch dashboard");
-      return res.json();
-    },
-  });
+  const { data, isLoading } = useDashboard();
   const { data: leads = [] } = useLeads();
 
   const stale = leads

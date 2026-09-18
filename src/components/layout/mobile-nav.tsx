@@ -18,6 +18,7 @@ import {
 import { signOut } from "@/app/(app)/actions";
 import type { Workspace } from "@/lib/types";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
+import { useNavPrefetch } from "@/lib/nav-prefetch";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -37,6 +38,7 @@ export function MobileNav({
 }) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const prefetch = useNavPrefetch();
 
   // Prevent page scroll while the drawer is open.
   useEffect(() => {
@@ -156,6 +158,8 @@ export function MobileNav({
                 <Link
                   key={item.href}
                   href={item.href}
+                  onTouchStart={() => prefetch(item.href)}
+                  onFocus={() => prefetch(item.href)}
                   onClick={() => setOpen(false)}
                   className={`mb-0.5 flex items-center gap-3 rounded-[3px] px-3 py-2.5 text-[13.5px] font-medium transition-colors ${
                     isActive
